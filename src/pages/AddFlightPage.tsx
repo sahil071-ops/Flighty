@@ -13,6 +13,14 @@ import type { ExtractedFlight } from '@/lib/claudeApi';
 
 type Step = 'choice' | 'pdf' | 'form';
 
+/** Match an extracted passenger name to a hardcoded family member by first name. */
+function detectMemberId(passengerName: string | null | undefined): string | undefined {
+  if (!passengerName) return undefined;
+  const lower = passengerName.toLowerCase();
+  const match = FAMILY_MEMBERS.find(m => m.id !== 'admin' && lower.includes(m.name.toLowerCase()));
+  return match?.id;
+}
+
 export function AddFlightPage() {
   const navigate = useNavigate();
   const { currentMember } = useApp();
@@ -21,6 +29,7 @@ export function AddFlightPage() {
   const [extractedFlights, setExtractedFlights] = useState<ExtractedFlight[]>([]);
   const [currentLegIndex, setCurrentLegIndex] = useState(0);
   const [multiLegTripId, setMultiLegTripId] = useState<string | null>(null);
+  const [detectedMemberId, setDetectedMemberId] = useState<string | undefined>();
 
   const isAdmin = currentMember?.isAdmin ?? false;
 
@@ -91,6 +100,7 @@ export function AddFlightPage() {
     setStep('form');
     setCurrentLegIndex(0);
     setMultiLegTripId(flights.length > 1 ? crypto.randomUUID() : null);
+    setDetectedMemberId(detectMemberId(flights[0]?.passenger_name));
   }
 
   const currentPrefill =
@@ -167,7 +177,7 @@ export function AddFlightPage() {
             )}
             <FlightForm
               members={FAMILY_MEMBERS}
-              currentUserId={currentMember?.id ?? 'admin'}
+              currentUserId={detectedMemberId ?? currentMember?.id ?? 'admin'}
               isAdmin={isAdmin}
               prefill={currentPrefill}
               onSubmit={handleFormSubmit}
