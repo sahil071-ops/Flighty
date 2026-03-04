@@ -20,6 +20,8 @@ export function AddFlightPage() {
   const [members, setMembers] = useState<Profile[]>([]);
   const [extractedFlights, setExtractedFlights] = useState<ExtractedFlight[]>([]);
   const [currentLegIndex, setCurrentLegIndex] = useState(0);
+  // Shared trip_id for all legs of a multi-leg booking
+  const [multiLegTripId, setMultiLegTripId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile?.group_id) return;
@@ -53,6 +55,7 @@ export function AddFlightPage() {
       .insert({
         ...flightData,
         group_id: profile.group_id,
+        trip_id: multiLegTripId ?? null,
       })
       .select()
       .single();
@@ -88,6 +91,8 @@ export function AddFlightPage() {
     setExtractedFlights(flights);
     setStep('form');
     setCurrentLegIndex(0);
+    // Generate one trip_id shared by all legs of a multi-leg booking
+    setMultiLegTripId(flights.length > 1 ? crypto.randomUUID() : null);
   }
 
   const currentPrefill =

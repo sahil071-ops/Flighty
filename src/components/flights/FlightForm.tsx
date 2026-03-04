@@ -478,6 +478,7 @@ export function formDataToFlight(data: FlightFormData) {
 
   return {
     family_member_id: data.family_member_id,
+    trip_id: data.trip_id || null,
     trip_name: data.trip_name || null,
     flight_number: data.flight_number,
     airline: data.airline || null,
