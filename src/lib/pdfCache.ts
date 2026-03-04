@@ -1,36 +1,48 @@
-const PDF_CACHE_NAME = 'ticket-pdfs-v1';
+import { supabase } from './supabase';
 
-export async function cachePDF(url: string): Promise<void> {
-  const cache = await caches.open(PDF_CACHE_NAME);
-  // Fetch with no-cors if needed; but since we use signed Supabase URLs this should work
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.status}`);
-  await cache.put(url, response);
+const PDF_CACHE_NAME = 'ticket-pdfs-v1';
+const BUCKET = 'tickets';
+
+// Cache key is based on the storage path, not the URL, so it never expires.
+function cacheKey(storagePath: string): string {
+  return `storage://${BUCKET}/${storagePath}`;
 }
 
-export async function getCachedPDF(url: string): Promise<Response | undefined> {
+async function fetchBlobFromStorage(storagePath: string): Promise<Blob> {
+  const { data, error } = await supabase.storage.from(BUCKET).download(storagePath);
+  if (error || !data) throw new Error(`Failed to fetch PDF: ${error?.message ?? 'unknown error'}`);
+  return data;
+}
+
+export async function cachePDF(storagePath: string): Promise<void> {
+  const blob = await fetchBlobFromStorage(storagePath);
   const cache = await caches.open(PDF_CACHE_NAME);
-  const cached = await cache.match(url);
+  const response = new Response(blob, { headers: { 'Content-Type': 'application/pdf' } });
+  await cache.put(cacheKey(storagePath), response);
+}
+
+export async function getCachedPDF(storagePath: string): Promise<Response | undefined> {
+  const cache = await caches.open(PDF_CACHE_NAME);
+  const cached = await cache.match(cacheKey(storagePath));
   return cached ?? undefined;
 }
 
-export async function isPDFCached(url: string): Promise<boolean> {
+export async function isPDFCached(storagePath: string): Promise<boolean> {
   const cache = await caches.open(PDF_CACHE_NAME);
-  const match = await cache.match(url);
+  const match = await cache.match(cacheKey(storagePath));
   return match !== undefined;
 }
 
-export async function removeCachedPDF(url: string): Promise<void> {
+export async function removeCachedPDF(storagePath: string): Promise<void> {
   const cache = await caches.open(PDF_CACHE_NAME);
-  await cache.delete(url);
+  await cache.delete(cacheKey(storagePath));
 }
 
-export async function openPDFBlob(url: string): Promise<void> {
-  let response = await getCachedPDF(url);
+export async function openPDFBlob(storagePath: string): Promise<void> {
+  let response = await getCachedPDF(storagePath);
   if (!response) {
-    // Not cached — fetch and cache
-    await cachePDF(url);
-    response = await getCachedPDF(url);
+    await cachePDF(storagePath);
+    response = await getCachedPDF(storagePath);
   }
   if (!response) throw new Error('PDF not available');
   const blob = await response.blob();
@@ -38,11 +50,11 @@ export async function openPDFBlob(url: string): Promise<void> {
   window.open(blobUrl, '_blank');
 }
 
-export async function downloadPDF(url: string, filename: string): Promise<void> {
-  let response = await getCachedPDF(url);
+export async function downloadPDF(storagePath: string, filename: string): Promise<void> {
+  let response = await getCachedPDF(storagePath);
   if (!response) {
-    await cachePDF(url);
-    response = await getCachedPDF(url);
+    await cachePDF(storagePath);
+    response = await getCachedPDF(storagePath);
   }
   if (!response) throw new Error('PDF not available');
   const blob = await response.blob();

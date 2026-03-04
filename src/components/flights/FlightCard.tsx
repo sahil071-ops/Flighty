@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import type { Flight, Profile } from '@/types';
+import type { Flight } from '@/types';
+import type { Member } from '@/data/members';
 import { Avatar } from '@/components/ui/Avatar';
 import {
   formatLocalTime,
@@ -10,11 +11,11 @@ import {
 
 interface FlightCardProps {
   flight: Flight;
-  profile?: Profile;
+  member?: Member;
   showMember?: boolean;
 }
 
-export function FlightCard({ flight, profile, showMember = true }: FlightCardProps) {
+export function FlightCard({ flight, member, showMember = true }: FlightCardProps) {
   const depTime = formatLocalTime(flight.departure_datetime_utc, flight.departure_timezone);
   const arrTime = formatLocalTime(flight.arrival_datetime_utc, flight.arrival_timezone);
   const depDate = formatLocalDateShort(flight.departure_datetime_utc, flight.departure_timezone);
@@ -22,7 +23,7 @@ export function FlightCard({ flight, profile, showMember = true }: FlightCardPro
   const arrAbbr = getTimezoneAbbr(flight.arrival_datetime_utc, flight.arrival_timezone);
   const duration = getDurationString(flight.departure_datetime_utc, flight.arrival_datetime_utc);
 
-  const colour = profile?.avatar_colour ?? '#64748b';
+  const colour = member?.colour ?? '#64748b';
 
   return (
     <Link
@@ -34,10 +35,10 @@ export function FlightCard({ flight, profile, showMember = true }: FlightCardPro
 
       <div className="p-4">
         {/* Top row: member + date */}
-        {showMember && profile && (
+        {showMember && member && (
           <div className="flex items-center gap-2 mb-3">
-            <Avatar name={profile.display_name} colour={colour} size="sm" />
-            <span className="text-xs text-slate-400 font-medium">{profile.display_name}</span>
+            <Avatar name={member.name} colour={colour} size="sm" />
+            <span className="text-xs text-slate-400 font-medium">{member.name}</span>
             <span className="text-xs text-slate-500 ml-auto">{depDate}</span>
           </div>
         )}

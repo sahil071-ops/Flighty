@@ -1,22 +1,5 @@
-export interface FamilyGroup {
-  id: string;
-  name: string;
-  invite_token: string;
-  created_at: string;
-}
-
-export interface Profile {
-  id: string;
-  display_name: string;
-  avatar_colour: string;
-  group_id: string | null;
-  is_admin: boolean;
-  created_at: string;
-}
-
 export interface Flight {
   id: string;
-  group_id: string;
   family_member_id: string;
   trip_id: string | null;
   trip_name: string | null;
@@ -42,8 +25,6 @@ export interface Flight {
   ticket_pdf_url: string | null;
   created_at: string;
   updated_at: string;
-  // Joined
-  profile?: Profile;
 }
 
 export interface FlightFormData {

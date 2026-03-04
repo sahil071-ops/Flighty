@@ -40,11 +40,11 @@ export async function lookupFlight(
       airline: flight.airline?.name ?? '',
       departure_airport_code: flight.departure?.iata ?? '',
       departure_airport_name: flight.departure?.airport ?? '',
-      departure_city: flight.departure?.timezone?.split('/')[1]?.replace('_', ' ') ?? '',
+      departure_city: flight.departure?.timezone?.split('/').pop()?.replace(/_/g, ' ') ?? '',
       departure_scheduled: flight.departure?.scheduled ?? '',
       arrival_airport_code: flight.arrival?.iata ?? '',
       arrival_airport_name: flight.arrival?.airport ?? '',
-      arrival_city: flight.arrival?.timezone?.split('/')[1]?.replace('_', ' ') ?? '',
+      arrival_city: flight.arrival?.timezone?.split('/').pop()?.replace(/_/g, ' ') ?? '',
       arrival_scheduled: flight.arrival?.scheduled ?? '',
     };
   } catch {
