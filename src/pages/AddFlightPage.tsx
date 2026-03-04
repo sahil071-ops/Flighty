@@ -63,7 +63,7 @@ export function AddFlightPage() {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throw new Error(error.message ?? JSON.stringify(error));
 
     if (pdfFile && inserted) {
       const path = `flights/${inserted.id}.pdf`;

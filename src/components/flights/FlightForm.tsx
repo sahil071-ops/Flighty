@@ -156,7 +156,7 @@ export function FlightForm({
     try {
       await onSubmit(form, pdfFile);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save flight.');
+      setError(err instanceof Error ? err.message : (err as {message?: string})?.message ?? 'Failed to save flight.');
     } finally {
       setLoading(false);
     }
