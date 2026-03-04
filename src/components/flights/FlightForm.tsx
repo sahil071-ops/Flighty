@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { getAirportTimezone, localToUTC } from '@/lib/timezone';
 import { lookupFlight } from '@/lib/aviationStack';
-import type { Profile, FlightFormData } from '@/types';
+import type { FlightFormData } from '@/types';
+import type { Member } from '@/data/members';
 import type { ExtractedFlight } from '@/lib/claudeApi';
 
 interface FlightFormProps {
-  members: Profile[];
+  members: Member[];
   currentUserId: string;
   isAdmin: boolean;
   prefill?: Partial<ExtractedFlight>;
@@ -173,7 +174,7 @@ export function FlightForm({
           >
             {members.map(m => (
               <option key={m.id} value={m.id}>
-                {m.display_name}{m.id === currentUserId ? ' (you)' : ''}
+                {m.name}{m.id === currentUserId ? ' (you)' : ''}
               </option>
             ))}
           </select>

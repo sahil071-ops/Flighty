@@ -1,20 +1,14 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import type { Flight, Profile } from '@/types';
+import type { Flight } from '@/types';
 
 interface FamilyFlightsDB extends DBSchema {
   flights: {
     key: string;
     value: Flight;
     indexes: {
-      'by-group': string;
       'by-member': string;
       'by-departure': string;
     };
-  };
-  profiles: {
-    key: string;
-    value: Profile;
-    indexes: { 'by-group': string };
   };
   meta: {
     key: string;
@@ -26,17 +20,22 @@ let db: IDBPDatabase<FamilyFlightsDB> | null = null;
 
 async function getDB(): Promise<IDBPDatabase<FamilyFlightsDB>> {
   if (db) return db;
-  db = await openDB<FamilyFlightsDB>('family-flights', 1, {
-    upgrade(database) {
-      const flightStore = database.createObjectStore('flights', { keyPath: 'id' });
-      flightStore.createIndex('by-group', 'group_id');
-      flightStore.createIndex('by-member', 'family_member_id');
-      flightStore.createIndex('by-departure', 'departure_datetime_utc');
-
-      const profileStore = database.createObjectStore('profiles', { keyPath: 'id' });
-      profileStore.createIndex('by-group', 'group_id');
-
-      database.createObjectStore('meta', { keyPath: 'key' });
+  db = await openDB<FamilyFlightsDB>('family-flights', 2, {
+    upgrade(database, oldVersion) {
+      if (oldVersion < 1) {
+        const flightStore = database.createObjectStore('flights', { keyPath: 'id' });
+        flightStore.createIndex('by-member', 'family_member_id');
+        flightStore.createIndex('by-departure', 'departure_datetime_utc');
+        database.createObjectStore('meta', { keyPath: 'key' });
+      }
+      if (oldVersion >= 1 && oldVersion < 2) {
+        // Remove profiles store — no longer needed after auth removal
+        // Cast to any to bypass typed schema for legacy store name
+        const db = database as unknown as IDBDatabase;
+        if (db.objectStoreNames.contains('profiles')) {
+          db.deleteObjectStore('profiles');
+        }
+      }
     },
   });
   return db;
@@ -64,23 +63,10 @@ export async function deleteCachedFlight(id: string): Promise<void> {
   await database.delete('flights', id);
 }
 
-export async function cacheProfiles(profiles: Profile[]): Promise<void> {
-  const database = await getDB();
-  const tx = database.transaction('profiles', 'readwrite');
-  await Promise.all(profiles.map(p => tx.store.put(p)));
-  await tx.done;
-}
-
-export async function getCachedProfiles(): Promise<Profile[]> {
-  const database = await getDB();
-  return database.getAll('profiles');
-}
-
 export async function clearAllCache(): Promise<void> {
   const database = await getDB();
   await Promise.all([
     database.clear('flights'),
-    database.clear('profiles'),
     database.clear('meta'),
   ]);
 }

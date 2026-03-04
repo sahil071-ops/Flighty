@@ -7,12 +7,11 @@ This guide walks you through deploying FamilyFlights for your family. No technic
 ## What You'll Need
 
 - A computer with a web browser (Chrome or Firefox recommended)
-- About 30–45 minutes
-- A credit card (for Vercel — free tier is sufficient, no charge)
+- About 20–30 minutes
 
 You will create accounts on three free services:
 
-1. **Supabase** — stores your flight data and handles login
+1. **Supabase** — stores your flight data and PDF tickets
 2. **Anthropic** — powers the AI that reads your booking PDFs
 3. **Vercel** — hosts the app on the internet
 
@@ -31,16 +30,14 @@ You will create accounts on three free services:
 
 ---
 
-## Step 2 — Disable email confirmation (important)
+## Step 2 — Enable Anonymous Auth (required for PDF storage)
 
-By default Supabase asks new users to confirm their email address before they can sign in. For a private family app this is unnecessary and will cause a confusing error during signup. Turn it off:
+FamilyFlights uses Supabase anonymous sessions to upload and download PDF tickets securely.
 
 1. In your Supabase project, click **Authentication** in the left sidebar
-2. Click **Providers** → **Email**
-3. Toggle **Confirm email** to **OFF**
+2. Click **Providers**
+3. Find **Anonymous sign-ins** and toggle it **ON**
 4. Click **Save**
-
-> If you skip this step, new users will see "Something went wrong" when they sign up. The app handles this gracefully by showing a confirmation email screen, but disabling it gives a smoother experience.
 
 ---
 
@@ -55,7 +52,7 @@ By default Supabase asks new users to confirm their email address before they ca
 
 ---
 
-## Step 3 — Create the storage bucket for PDF tickets
+## Step 4 — Create the storage bucket for PDF tickets
 
 1. In Supabase, click **Storage** in the left sidebar
 2. Click **New bucket**
@@ -65,7 +62,7 @@ By default Supabase asks new users to confirm their email address before they ca
 
 ---
 
-## Step 4 — Get your Supabase API keys
+## Step 5 — Get your Supabase API keys
 
 1. In Supabase, click **Settings** → **API**
 2. You'll see two values — copy both and save them:
@@ -74,7 +71,7 @@ By default Supabase asks new users to confirm their email address before they ca
 
 ---
 
-## Step 5 — Get an Anthropic API key
+## Step 6 — Get an Anthropic API key
 
 This powers the AI that reads your flight booking PDFs.
 
@@ -87,7 +84,7 @@ This powers the AI that reads your flight booking PDFs.
 
 ---
 
-## Step 6 — (Optional) Get an AviationStack API key
+## Step 7 — (Optional) Get an AviationStack API key
 
 This lets you look up flight times by flight number when adding flights manually.
 
@@ -100,46 +97,34 @@ If you skip this, you can still add flights manually by entering all details you
 
 ---
 
-## Step 7 — Deploy to Vercel
+## Step 8 — Deploy to Vercel
 
 1. Go to [vercel.com](https://vercel.com) and sign up with your GitHub account
    - If you don't have GitHub, create a free account at [github.com](https://github.com) first
-2. Fork or upload this project to your GitHub account:
-   - Click the **+** button → **New repository** → upload the project files
+2. Fork or upload this project to your GitHub account
 3. In Vercel, click **Add New Project** → import your GitHub repository
-4. Before clicking Deploy, click **Environment Variables** and add these four variables:
+4. Before clicking Deploy, click **Environment Variables** and add these variables:
 
 | Variable name | Value |
 |---|---|
-| `VITE_SUPABASE_URL` | Your Supabase Project URL from Step 4 |
-| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key from Step 4 |
-| `VITE_ANTHROPIC_API_KEY` | Your Anthropic key from Step 5 |
-| `VITE_AVIATIONSTACK_API_KEY` | Your AviationStack key from Step 6 (optional) |
+| `VITE_SUPABASE_URL` | Your Supabase Project URL from Step 5 |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key from Step 5 |
+| `VITE_ANTHROPIC_API_KEY` | Your Anthropic key from Step 6 |
+| `VITE_AVIATIONSTACK_API_KEY` | Your AviationStack key from Step 7 (optional) |
+| `VITE_APP_PASSWORD` | The site password your family will use (default: `Axis@149`) |
 
 5. Click **Deploy**
 6. Wait about 2 minutes — Vercel will give you a URL like `https://family-flights-xxx.vercel.app`
 
 ---
 
-## Step 8 — Create the first account (Group Admin)
+## Step 9 — Share with your family
 
-1. Open your Vercel URL in a browser
-2. Click **Sign up**
-3. Enter your email and a password
-4. Enter your name, choose a colour, and give your family group a name (e.g. "The Sharma Family")
-5. Click **Create account**
-6. You are now the Group Admin
+1. Open your Vercel URL and enter the site password (default: `Axis@149`, or whatever you set)
+2. You'll see the family member picker — tap your name to see your flights
+3. Share the URL and password with your family members
 
----
-
-## Step 9 — Invite family members
-
-1. Log in and go to the **Profile** tab (bottom right)
-2. Tap **Manage Family**
-3. Copy the **Family invite link**
-4. Send it to your family members via WhatsApp or email
-
-When a family member opens the link, they'll be asked to create an account and will automatically join your family group.
+The **Admin** member is the only one who can add, edit, or delete flights.
 
 ---
 
@@ -163,61 +148,56 @@ The app will now appear on the home screen like a regular app and works offline.
 
 ## How to use the app
 
-### Adding a flight
+### Adding a flight (Admin only)
 
 **From a booking PDF (recommended):**
-1. Tap the **+** button on the Home or My Flights screen
-2. Choose **Upload booking PDF**
-3. Select your airline booking confirmation PDF
-4. Wait 10–20 seconds — the AI reads the PDF and fills in all the details
-5. Review the details, correct anything if needed, and tap **Save flight**
+1. Tap your profile (Admin) on the home screen
+2. Tap the **+** button in the top right
+3. Choose **Upload booking PDF**
+4. Select your airline booking confirmation PDF
+5. Wait 10–20 seconds — the AI reads the PDF and fills in all the details
+6. Choose which family member the flight belongs to
+7. Review the details and tap **Save flight**
 
 For multi-leg bookings (e.g. BOM → DXB → LHR), all legs will be detected and you'll save them one by one.
 
 **Manually:**
-1. Tap the **+** button
-2. Choose **Enter manually**
-3. Fill in the flight number and date, then optionally tap **Auto-fill from flight number** to look up times
-4. Fill in any remaining details and tap **Save flight**
+1. Tap **+** → **Enter manually**
+2. Fill in the flight number and date, then optionally tap **Auto-fill from flight number**
+3. Fill in remaining details and tap **Save flight**
 
 ### Viewing flights offline
 
-Once flights have been loaded, they're available offline automatically. You can browse all flights, including family members' flights, without a connection.
-
-For PDF tickets: open the flight detail and tap **View Ticket** while connected — the PDF is saved to your device and available offline from then on.
+Once flights have been loaded, they're available offline automatically. For PDF tickets: open the flight detail and tap **View Ticket** while connected — the PDF is saved to your device.
 
 ---
 
 ## Troubleshooting
 
 **"Missing Supabase environment variables" error:**
-Make sure you added the environment variables in Vercel before deploying. Go to Vercel → your project → Settings → Environment Variables, add them, then redeploy.
+Make sure you added the environment variables in Vercel before deploying.
 
 **PDF upload doesn't work:**
-Make sure your Anthropic API key is correct and you have billing credits added. The free tier requires adding a payment method.
-
-**Can't see family members' flights:**
-All members must be in the same family group (joined via the invite link). Check Profile → Manage Family to see who is in the group.
+Make sure your Anthropic API key is correct and you have billing credits. Also check that Anonymous sign-ins are enabled in Supabase Auth settings.
 
 **Flight times look wrong:**
-Times are displayed in the local timezone of each airport. If a flight shows a time that seems off, check that the IATA airport codes are correct (3-letter codes like BOM, DXB, LHR).
+Times are displayed in the local timezone of each airport. Check that the IATA airport codes are correct (3-letter codes like BOM, DXB, LHR).
 
 ---
 
 ## PWA Icons
 
-The default icons are placeholders. To generate proper icons from the included SVG:
+The default icons are placeholders. To generate proper icons:
 
 1. Install ImageMagick: [imagemagick.org/script/download.php](https://imagemagick.org/script/download.php)
 2. Run: `node scripts/generate-icons.mjs`
 3. Commit and push — Vercel will redeploy automatically
 
-Or use any online SVG-to-PNG converter with the file `public/icons/icon.svg`.
-
 ---
 
 ## Security notes
 
-- Your Anthropic API key is included in the browser bundle (this is required for direct PDF parsing). For a more secure setup, consider creating a backend proxy.
-- The app uses Supabase Row Level Security — family members can only see flights within their own group.
-- Ticket PDFs are stored privately and only accessible to authenticated members of your group.
+- The app is protected by a single site password shared among all family members.
+- Your Anthropic API key is included in the browser bundle (required for direct PDF parsing). For production, consider a backend proxy.
+- PDF tickets are stored privately in Supabase Storage and only accessible via authenticated (anonymous) sessions.
+- Row Level Security is enabled on the database, allowing access only via valid Supabase sessions.

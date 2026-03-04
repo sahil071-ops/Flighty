@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useApp } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
-import { getCachedFlight, getCachedProfiles, deleteCachedFlight } from '@/lib/db';
+import { getCachedFlight, deleteCachedFlight } from '@/lib/db';
+import { getMember } from '@/data/members';
 import { Layout } from '@/components/layout/Layout';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -16,7 +17,7 @@ import {
   getTimezoneAbbr,
   getDurationString,
 } from '@/lib/timezone';
-import type { Flight, Profile } from '@/types';
+import type { Flight } from '@/types';
 
 function DetailRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
@@ -31,10 +32,9 @@ function DetailRow({ label, value }: { label: string; value: string | null | und
 export function FlightDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { currentMember } = useApp();
   const { isOnline } = useOffline();
   const [flight, setFlight] = useState<Flight | null>(null);
-  const [member, setMember] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [pdfCached, setPdfCached] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -56,17 +56,9 @@ export function FlightDetailPage() {
           .maybeSingle();
         if (error) throw error;
         setFlight(data);
-        if (data) {
-          const { data: p } = await supabase.from('profiles').select('*').eq('id', data.family_member_id).maybeSingle();
-          setMember(p);
-        }
       } else {
         const f = await getCachedFlight(id!);
         setFlight(f ?? null);
-        if (f) {
-          const profiles = await getCachedProfiles();
-          setMember(profiles.find(p => p.id === f.family_member_id) ?? null);
-        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load flight.');
@@ -130,6 +122,7 @@ export function FlightDetailPage() {
     const depAbbr = getTimezoneAbbr(flight.departure_datetime_utc, flight.departure_timezone);
     const arrAbbr = getTimezoneAbbr(flight.arrival_datetime_utc, flight.arrival_timezone);
     const depDate = formatLocalDate(flight.departure_datetime_utc, flight.departure_timezone);
+    const memberName = getMember(flight.family_member_id)?.name ?? 'Passenger';
 
     const lines = [
       `✈️ *${flight.flight_number}*${flight.airline ? ` – ${flight.airline}` : ''}`,
@@ -138,7 +131,7 @@ export function FlightDetailPage() {
       `🛫 ${depTime} ${depAbbr} → 🛬 ${arrTime} ${arrAbbr}`,
       flight.booking_reference ? `📋 Ref: ${flight.booking_reference}` : null,
       flight.seat ? `💺 Seat: ${flight.seat}` : null,
-      member ? `👤 Passenger: ${member.display_name}` : null,
+      `👤 Passenger: ${memberName}`,
     ]
       .filter(Boolean)
       .join('\n');
@@ -147,12 +140,13 @@ export function FlightDetailPage() {
     window.open(url, '_blank');
   }
 
-  const canEdit =
-    profile?.is_admin || (flight && flight.family_member_id === profile?.id);
+  const member = flight ? getMember(flight.family_member_id) : undefined;
+  const isAdmin = currentMember?.isAdmin ?? false;
+  const canEdit = isAdmin || (flight && flight.family_member_id === currentMember?.id);
 
   if (loading) {
     return (
-      <Layout title="Flight details">
+      <Layout title="Flight details" hideNav>
         <div className="flex justify-center py-16">
           <LoadingSpinner size="lg" />
         </div>
@@ -162,7 +156,7 @@ export function FlightDetailPage() {
 
   if (!flight) {
     return (
-      <Layout title="Flight not found">
+      <Layout title="Flight not found" hideNav>
         <div className="text-center py-16 px-4">
           <p className="text-slate-400">This flight could not be found.</p>
           <button onClick={() => navigate(-1)} className="text-sky-400 text-sm mt-4">
@@ -179,10 +173,12 @@ export function FlightDetailPage() {
   const depAbbr = getTimezoneAbbr(flight.departure_datetime_utc, flight.departure_timezone);
   const arrAbbr = getTimezoneAbbr(flight.arrival_datetime_utc, flight.arrival_timezone);
   const duration = getDurationString(flight.departure_datetime_utc, flight.arrival_datetime_utc);
+  const colour = member?.colour ?? '#0ea5e9';
 
   return (
     <Layout
       title={`${flight.flight_number}`}
+      hideNav
       headerRight={
         <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white p-2 -mr-2">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -195,9 +191,9 @@ export function FlightDetailPage() {
         {/* Member */}
         {member && (
           <div className="flex items-center gap-3 mb-5">
-            <Avatar name={member.display_name} colour={member.avatar_colour} size="md" />
+            <Avatar name={member.name} colour={member.colour} size="md" />
             <div>
-              <div className="text-sm font-medium text-white">{member.display_name}</div>
+              <div className="text-sm font-medium text-white">{member.name}</div>
               {flight.trip_name && <div className="text-xs text-slate-500">{flight.trip_name}</div>}
             </div>
           </div>
@@ -206,7 +202,7 @@ export function FlightDetailPage() {
         {/* Route header */}
         <div
           className="rounded-2xl p-5 mb-5"
-          style={{ background: `linear-gradient(135deg, ${member?.avatar_colour ?? '#0ea5e9'}22, transparent)`, border: `1px solid ${member?.avatar_colour ?? '#0ea5e9'}33` }}
+          style={{ background: `linear-gradient(135deg, ${colour}22, transparent)`, border: `1px solid ${colour}33` }}
         >
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -277,7 +273,7 @@ export function FlightDetailPage() {
           <Button
             variant="secondary"
             className="w-full"
-            onClick={() => downloadICS(flight, member?.display_name ?? 'Passenger')}
+            onClick={() => downloadICS(flight, member?.name ?? 'Passenger')}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -308,14 +304,16 @@ export function FlightDetailPage() {
                 </svg>
                 Edit flight
               </Link>
-              <Button
-                variant="danger"
-                className="w-full"
-                onClick={handleDelete}
-                loading={deleting}
-              >
-                Delete flight
-              </Button>
+              {isAdmin && (
+                <Button
+                  variant="danger"
+                  className="w-full"
+                  onClick={handleDelete}
+                  loading={deleting}
+                >
+                  Delete flight
+                </Button>
+              )}
             </>
           )}
         </div>

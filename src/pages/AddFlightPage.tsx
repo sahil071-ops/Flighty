@@ -1,40 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useApp } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
+import { FAMILY_MEMBERS } from '@/data/members';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/Button';
 import { PDFUpload } from '@/components/flights/PDFUpload';
 import { FlightForm, formDataToFlight } from '@/components/flights/FlightForm';
-import type { Profile, FlightFormData } from '@/types';
+import type { FlightFormData } from '@/types';
 import type { ExtractedFlight } from '@/lib/claudeApi';
 
 type Step = 'choice' | 'pdf' | 'form';
 
 export function AddFlightPage() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { currentMember } = useApp();
   const { isOnline } = useOffline();
   const [step, setStep] = useState<Step>('choice');
-  const [members, setMembers] = useState<Profile[]>([]);
   const [extractedFlights, setExtractedFlights] = useState<ExtractedFlight[]>([]);
   const [currentLegIndex, setCurrentLegIndex] = useState(0);
-  // Shared trip_id for all legs of a multi-leg booking
   const [multiLegTripId, setMultiLegTripId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!profile?.group_id) return;
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('group_id', profile.group_id)
-      .then(({ data }) => setMembers(data ?? []));
-  }, [profile?.group_id]);
+  const isAdmin = currentMember?.isAdmin ?? false;
+
+  // Only admin can add flights
+  if (!isAdmin) {
+    return (
+      <Layout title="Add flight" hideNav>
+        <div className="px-4 py-8 text-center">
+          <p className="text-slate-400">Only Admin can add flights.</p>
+          <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>
+            Go back
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!isOnline) {
     return (
-      <Layout title="Add flight">
+      <Layout title="Add flight" hideNav>
         <div className="px-4 py-8 text-center">
           <p className="text-slate-400">You're offline. Adding flights requires a connection.</p>
           <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>
@@ -46,15 +52,12 @@ export function AddFlightPage() {
   }
 
   async function handleFormSubmit(data: FlightFormData, pdfFile?: File) {
-    if (!profile?.group_id) throw new Error('Not in a group');
-
     const flightData = formDataToFlight(data);
 
     const { data: inserted, error } = await supabase
       .from('flights')
       .insert({
         ...flightData,
-        group_id: profile.group_id,
         trip_id: multiLegTripId ?? null,
       })
       .select()
@@ -62,16 +65,13 @@ export function AddFlightPage() {
 
     if (error) throw error;
 
-    // Upload PDF if provided
     if (pdfFile && inserted) {
-      const path = `${profile.group_id}/${inserted.id}.pdf`;
+      const path = `flights/${inserted.id}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from('tickets')
         .upload(path, pdfFile, { contentType: 'application/pdf', upsert: true });
 
       if (!uploadError) {
-        // Store the storage path (not a public URL) — bucket is private.
-        // pdfCache.ts downloads via the authenticated Supabase client.
         await supabase
           .from('flights')
           .update({ ticket_pdf_url: path })
@@ -79,11 +79,10 @@ export function AddFlightPage() {
       }
     }
 
-    // Handle multi-leg
     if (extractedFlights.length > 1 && currentLegIndex < extractedFlights.length - 1) {
       setCurrentLegIndex(i => i + 1);
     } else {
-      navigate('/');
+      navigate(-1);
     }
   }
 
@@ -91,7 +90,6 @@ export function AddFlightPage() {
     setExtractedFlights(flights);
     setStep('form');
     setCurrentLegIndex(0);
-    // Generate one trip_id shared by all legs of a multi-leg booking
     setMultiLegTripId(flights.length > 1 ? crypto.randomUUID() : null);
   }
 
@@ -101,6 +99,7 @@ export function AddFlightPage() {
   return (
     <Layout
       title={step === 'choice' ? 'Add flight' : step === 'pdf' ? 'Upload booking PDF' : 'Flight details'}
+      hideNav
       headerRight={
         <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white p-2 -mr-2">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -167,9 +166,9 @@ export function AddFlightPage() {
               </div>
             )}
             <FlightForm
-              members={members}
-              currentUserId={profile!.id}
-              isAdmin={profile!.is_admin}
+              members={FAMILY_MEMBERS}
+              currentUserId={currentMember?.id ?? 'admin'}
+              isAdmin={isAdmin}
               prefill={currentPrefill}
               onSubmit={handleFormSubmit}
               submitLabel={

@@ -1,39 +1,37 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useApp } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
+import { FAMILY_MEMBERS } from '@/data/members';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/Button';
 import { FlightForm, formDataToFlight } from '@/components/flights/FlightForm';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { utcToLocal } from '@/lib/timezone';
-import type { Flight, Profile, FlightFormData } from '@/types';
+import type { Flight, FlightFormData } from '@/types';
 
 export function EditFlightPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { currentMember } = useApp();
   const { isOnline } = useOffline();
   const [flight, setFlight] = useState<Flight | null>(null);
-  const [members, setMembers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const isAdmin = currentMember?.isAdmin ?? false;
+
   useEffect(() => {
-    if (!id || !profile?.group_id) return;
-    Promise.all([
-      supabase.from('flights').select('*').eq('id', id).maybeSingle(),
-      supabase.from('profiles').select('*').eq('group_id', profile.group_id),
-    ]).then(([flightRes, membersRes]) => {
-      setFlight(flightRes.data);
-      setMembers(membersRes.data ?? []);
+    if (!id) return;
+    supabase.from('flights').select('*').eq('id', id).maybeSingle().then(({ data }) => {
+      setFlight(data);
       setLoading(false);
     });
-  }, [id, profile?.group_id]);
+  }, [id]);
 
   if (!isOnline) {
     return (
-      <Layout title="Edit flight">
+      <Layout title="Edit flight" hideNav>
         <div className="px-4 py-8 text-center">
           <p className="text-slate-400">You're offline. Editing requires a connection.</p>
           <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>Go back</Button>
@@ -53,13 +51,12 @@ export function EditFlightPage() {
 
     if (error) throw error;
 
-    if (pdfFile && profile?.group_id) {
-      const path = `${profile.group_id}/${flight.id}.pdf`;
+    if (pdfFile) {
+      const path = `flights/${flight.id}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from('tickets')
         .upload(path, pdfFile, { contentType: 'application/pdf', upsert: true });
       if (!uploadError) {
-        // Store the storage path (not a public URL) — bucket is private.
         await supabase.from('flights').update({ ticket_pdf_url: path }).eq('id', flight.id);
       }
     }
@@ -98,6 +95,7 @@ export function EditFlightPage() {
   return (
     <Layout
       title="Edit flight"
+      hideNav
       headerRight={
         <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white p-2 -mr-2">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -113,9 +111,9 @@ export function EditFlightPage() {
           <p className="text-slate-400 text-center py-8">Flight not found.</p>
         ) : (
           <FlightForm
-            members={members}
-            currentUserId={profile!.id}
-            isAdmin={profile!.is_admin}
+            members={FAMILY_MEMBERS}
+            currentUserId={currentMember?.id ?? 'admin'}
+            isAdmin={isAdmin}
             initialData={flightToFormData(flight)}
             onSubmit={handleSubmit}
             submitLabel="Save changes"
