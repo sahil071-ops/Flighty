@@ -70,6 +70,10 @@ create policy "Members can read their group" on public.family_groups
     id = (select group_id from public.profiles where id = auth.uid())
   );
 
+-- Any authenticated user can create a new family group (first-time signup)
+create policy "Authenticated users can create a group" on public.family_groups
+  for insert with check (auth.role() = 'authenticated');
+
 create policy "Members can update their group" on public.family_groups
   for update using (
     id = (select group_id from public.profiles where id = auth.uid())

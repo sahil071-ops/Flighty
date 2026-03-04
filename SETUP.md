@@ -31,7 +31,20 @@ You will create accounts on three free services:
 
 ---
 
-## Step 2 — Set up the database
+## Step 2 — Disable email confirmation (important)
+
+By default Supabase asks new users to confirm their email address before they can sign in. For a private family app this is unnecessary and will cause a confusing error during signup. Turn it off:
+
+1. In your Supabase project, click **Authentication** in the left sidebar
+2. Click **Providers** → **Email**
+3. Toggle **Confirm email** to **OFF**
+4. Click **Save**
+
+> If you skip this step, new users will see "Something went wrong" when they sign up. The app handles this gracefully by showing a confirmation email screen, but disabling it gives a smoother experience.
+
+---
+
+## Step 3 — Set up the database
 
 1. In your Supabase project, click **SQL Editor** in the left sidebar
 2. Click **New query**

@@ -10,7 +10,7 @@ export function SignupPage() {
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get('token');
 
-  const [step, setStep] = useState<'account' | 'profile'>('account');
+  const [step, setStep] = useState<'account' | 'profile' | 'confirm'>('account');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -51,6 +51,24 @@ export function SignupPage() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Signup failed');
 
+      // If Supabase email confirmation is enabled the session will be null here.
+      // We can't make authenticated DB calls without a session, so store the
+      // pending invite token (if any) and ask the user to confirm their email.
+      // The OnboardingPage will pick up the token after confirmation.
+      if (!authData.session) {
+        if (inviteToken) {
+          localStorage.setItem('pending_invite_token', inviteToken);
+        }
+        // Store profile prefs so OnboardingPage can pre-fill them
+        localStorage.setItem('pending_display_name', displayName.trim());
+        localStorage.setItem('pending_avatar_colour', avatarColour);
+        if (groupName.trim()) {
+          localStorage.setItem('pending_group_name', groupName.trim());
+        }
+        setStep('confirm');
+        return;
+      }
+
       const userId = authData.user.id;
 
       let groupId: string;
@@ -89,7 +107,11 @@ export function SignupPage() {
 
       navigate('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      // Supabase PostgrestError is not an instanceof Error — extract .message directly
+      const msg = err instanceof Error
+        ? err.message
+        : (err as { message?: string })?.message ?? 'Something went wrong. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -111,7 +133,28 @@ export function SignupPage() {
           </p>
         </div>
 
-        {step === 'account' ? (
+        {step === 'confirm' ? (
+          <div className="flex flex-col items-center text-center gap-4">
+            <div className="w-16 h-16 bg-sky-500/10 rounded-full flex items-center justify-center text-3xl">
+              📧
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white mb-2">Check your email</h2>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                We sent a confirmation link to <span className="text-white font-medium">{email}</span>.
+                Tap the link in the email to activate your account — your family group will be set up automatically once you confirm.
+              </p>
+            </div>
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 text-left w-full">
+              <p className="text-xs text-slate-400 leading-relaxed">
+                <span className="text-slate-300 font-medium">Tip:</span> If you don't see the email, check your spam folder. After confirming, you can sign in on the login screen.
+              </p>
+            </div>
+            <Link to="/login" className="text-sky-400 text-sm font-medium mt-2">
+              Already confirmed? Sign in
+            </Link>
+          </div>
+        ) : step === 'account' ? (
           <form onSubmit={handleAccountStep} className="flex flex-col gap-4">
             <input
               type="email"
