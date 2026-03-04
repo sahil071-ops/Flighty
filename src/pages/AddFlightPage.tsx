@@ -13,12 +13,25 @@ import type { ExtractedFlight } from '@/lib/claudeApi';
 
 type Step = 'choice' | 'pdf' | 'form';
 
-/** Match an extracted passenger name to a hardcoded family member by first name. */
+/**
+ * Match an extracted passenger name to a hardcoded family member.
+ * Handles airline format (SURNAME/FIRSTNAME MR), all-caps, accents.
+ */
 function detectMemberId(passengerName: string | null | undefined): string | undefined {
   if (!passengerName) return undefined;
-  const lower = passengerName.toLowerCase();
-  const match = FAMILY_MEMBERS.find(m => m.id !== 'admin' && lower.includes(m.name.toLowerCase()));
-  return match?.id;
+  // Normalise: lowercase, strip accents, replace slashes/dashes with space
+  const normalise = (s: string) =>
+    s.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\/\-_]/g, ' ');
+  const haystack = normalise(passengerName);
+  const words = haystack.split(/\s+/);
+  return FAMILY_MEMBERS.find(m => {
+    if (m.id === 'admin') return false;
+    const needle = normalise(m.name);
+    // exact word match or substring match
+    return words.includes(needle) || haystack.includes(needle);
+  })?.id;
 }
 
 export function AddFlightPage() {
@@ -176,6 +189,7 @@ export function AddFlightPage() {
               </div>
             )}
             <FlightForm
+              key={`leg-${currentLegIndex}`}
               members={FAMILY_MEMBERS}
               currentUserId={detectedMemberId ?? currentMember?.id ?? 'admin'}
               isAdmin={isAdmin}
