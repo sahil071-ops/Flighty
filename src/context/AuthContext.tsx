@@ -47,29 +47,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const p = await fetchProfile(session.user.id);
-        setProfile(p);
-      }
-      setLoading(false);
-    });
+    let mounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const p = await fetchProfile(session.user.id);
-        setProfile(p);
-      } else {
-        setProfile(null);
+    // Use onAuthStateChange as the single source of truth (Supabase v2 recommendation).
+    // It fires immediately with INITIAL_SESSION so we don't need a separate getSession() call.
+    // The async callback is guarded by `mounted` so stale state updates after unmount
+    // (e.g. during React hot-reload or fast navigation) don't cause issues.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (!mounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          const p = await fetchProfile(session.user.id);
+          if (!mounted) return;
+          setProfile(p);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
 
-    return () => subscription.unsubscribe();
+    // Safety net: if the auth event never fires (e.g. Supabase unreachable at startup),
+    // unblock the UI after 8 seconds rather than showing a spinner forever.
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 8000);
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   return (
