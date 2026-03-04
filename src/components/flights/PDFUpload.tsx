@@ -4,7 +4,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { extractFlightsFromPDF, fileToBase64, type ExtractedFlight } from '@/lib/claudeApi';
 
 interface PDFUploadProps {
-  onExtracted: (flights: ExtractedFlight[]) => void;
+  onExtracted: (flights: ExtractedFlight[], file: File) => void;
   onSkip: () => void;
 }
 
@@ -33,7 +33,7 @@ export function PDFUpload({ onExtracted, onSkip }: PDFUploadProps) {
         setError('No flight details found in this PDF. Try manual entry.');
         return;
       }
-      onExtracted(flights);
+      onExtracted(flights, file);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to parse PDF. Try manual entry.');
     } finally {

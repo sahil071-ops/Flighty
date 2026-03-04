@@ -68,6 +68,14 @@ export function formatLocalDateShort(utcString: string, timezone: string): strin
   }).format(date);
 }
 
+/** Returns e.g. "Mon · 15 Jan" — used on flight cards for prominent date display */
+export function formatLocalDateCard(utcString: string, timezone: string): string {
+  const date = new Date(utcString);
+  const wd = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, weekday: 'short' }).format(date);
+  const dm = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, day: 'numeric', month: 'short' }).format(date);
+  return `${wd} · ${dm}`;
+}
+
 export function getTimezoneAbbr(utcString: string, timezone: string): string {
   const date = new Date(utcString);
   const parts = new Intl.DateTimeFormat('en-US', {

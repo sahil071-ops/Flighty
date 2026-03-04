@@ -5,11 +5,73 @@ import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
 import { getCachedFlights, cacheFlights } from '@/lib/db';
 import { getMember } from '@/data/members';
+import type { Member } from '@/data/members';
 import { Layout } from '@/components/layout/Layout';
 import { FlightCard } from '@/components/flights/FlightCard';
 import { Avatar } from '@/components/ui/Avatar';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { Flight } from '@/types';
+
+type FlightGroup = { type: 'single'; flight: Flight } | { type: 'trip'; flights: Flight[] };
+
+function groupFlights(flights: Flight[]): FlightGroup[] {
+  const result: FlightGroup[] = [];
+  let i = 0;
+  while (i < flights.length) {
+    const f = flights[i];
+    if (f.trip_id) {
+      const group = [f];
+      let j = i + 1;
+      while (j < flights.length && flights[j].trip_id === f.trip_id) {
+        group.push(flights[j]);
+        j++;
+      }
+      result.push(group.length > 1 ? { type: 'trip', flights: group } : { type: 'single', flight: f });
+      i = j;
+    } else {
+      result.push({ type: 'single', flight: f });
+      i++;
+    }
+  }
+  return result;
+}
+
+function TripGroup({ flights, member, showMember }: { flights: Flight[]; member: Member | undefined; showMember: boolean }) {
+  const tripName = flights[0].trip_name;
+  const colour = (showMember ? getMember(flights[0].family_member_id)?.colour : member?.colour) ?? '#64748b';
+  return (
+    <div className="rounded-xl overflow-hidden border border-slate-700" style={{ borderLeftColor: colour, borderLeftWidth: 3 }}>
+      {tripName && (
+        <div className="bg-slate-800/80 px-4 py-2 flex items-center gap-2 border-b border-slate-700">
+          <svg className="w-3 h-3 text-slate-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+          </svg>
+          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wide">{tripName}</span>
+          <span className="ml-auto text-[10px] text-slate-500">{flights.length} legs</span>
+        </div>
+      )}
+      {flights.map((f, idx) => (
+        <div key={f.id}>
+          <FlightCard
+            flight={f}
+            member={showMember ? getMember(f.family_member_id) : member}
+            showMember={showMember}
+            grouped
+          />
+          {idx < flights.length - 1 && (
+            <div className="flex items-center gap-3 px-4 py-1.5 bg-slate-800/60 border-y border-slate-700/50">
+              <div className="w-2 h-2 rounded-full border-2 flex-shrink-0" style={{ borderColor: colour }} />
+              <div className="h-px flex-1 opacity-30" style={{ backgroundColor: colour }} />
+              <span className="text-[10px] text-slate-500">Connection</span>
+              <div className="h-px flex-1 opacity-30" style={{ backgroundColor: colour }} />
+              <div className="w-2 h-2 rounded-full border-2 flex-shrink-0" style={{ borderColor: colour }} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function MyFlightsPage() {
   const { id } = useParams<{ id: string }>();
@@ -142,14 +204,13 @@ export function MyFlightsPage() {
             {upcoming.length > 0 && (
               <>
                 <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide px-1 mt-1">Upcoming</h2>
-                {upcoming.map(f => (
-                  <FlightCard
-                    key={f.id}
-                    flight={f}
-                    member={isAdminView ? getMember(f.family_member_id) : member}
-                    showMember={isAdminView}
-                  />
-                ))}
+                {groupFlights(upcoming).map(item =>
+                  item.type === 'trip' ? (
+                    <TripGroup key={item.flights[0].trip_id} flights={item.flights} member={member} showMember={isAdminView} />
+                  ) : (
+                    <FlightCard key={item.flight.id} flight={item.flight} member={isAdminView ? getMember(item.flight.family_member_id) : member} showMember={isAdminView} />
+                  )
+                )}
               </>
             )}
             {past.length > 0 && (
@@ -157,14 +218,13 @@ export function MyFlightsPage() {
                 <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide px-1 mt-4 border-t border-slate-800 pt-4">
                   Past flights
                 </h2>
-                {past.map(f => (
-                  <FlightCard
-                    key={f.id}
-                    flight={f}
-                    member={isAdminView ? getMember(f.family_member_id) : member}
-                    showMember={isAdminView}
-                  />
-                ))}
+                {groupFlights(past).map(item =>
+                  item.type === 'trip' ? (
+                    <TripGroup key={item.flights[0].trip_id} flights={item.flights} member={member} showMember={isAdminView} />
+                  ) : (
+                    <FlightCard key={item.flight.id} flight={item.flight} member={isAdminView ? getMember(item.flight.family_member_id) : member} showMember={isAdminView} />
+                  )
+                )}
               </>
             )}
           </div>

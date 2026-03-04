@@ -14,6 +14,7 @@ interface FlightFormProps {
   initialData?: Partial<FlightFormData>;
   onSubmit: (data: FlightFormData, pdfFile?: File) => Promise<void>;
   submitLabel?: string;
+  attachedPdfName?: string; // PDF already captured from the parsing step
 }
 
 function Field({
@@ -45,6 +46,7 @@ export function FlightForm({
   initialData,
   onSubmit,
   submitLabel = 'Save flight',
+  attachedPdfName,
 }: FlightFormProps) {
   const [form, setForm] = useState<FlightFormData>({
     family_member_id: initialData?.family_member_id ?? currentUserId,
@@ -438,20 +440,33 @@ export function FlightForm({
 
       {/* PDF upload */}
       <Field label="Ticket PDF (optional)">
-        <label className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 cursor-pointer hover:border-slate-600">
-          <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
-          </svg>
-          <span className="text-sm text-slate-400 flex-1 truncate">
-            {pdfFile ? pdfFile.name : 'Attach ticket PDF'}
-          </span>
-          <input
-            type="file"
-            accept="application/pdf"
-            className="hidden"
-            onChange={e => setPdfFile(e.target.files?.[0])}
-          />
-        </label>
+        {attachedPdfName && !pdfFile ? (
+          <div className="flex items-center gap-3 bg-emerald-900/30 border border-emerald-700/50 rounded-lg px-3 py-2.5">
+            <svg className="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm text-emerald-300 flex-1 truncate">{attachedPdfName}</span>
+            <label className="text-xs text-slate-400 cursor-pointer hover:text-white underline underline-offset-2">
+              Change
+              <input type="file" accept="application/pdf" className="hidden" onChange={e => setPdfFile(e.target.files?.[0])} />
+            </label>
+          </div>
+        ) : (
+          <label className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 cursor-pointer hover:border-slate-600">
+            <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+            </svg>
+            <span className="text-sm text-slate-400 flex-1 truncate">
+              {pdfFile ? pdfFile.name : 'Attach ticket PDF'}
+            </span>
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={e => setPdfFile(e.target.files?.[0])}
+            />
+          </label>
+        )}
       </Field>
 
       {error && (
