@@ -1,10 +1,15 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, FAMILY_MEMBERS } from '@/context/AppContext';
 import { Avatar } from '@/components/ui/Avatar';
+import { CalendarView } from '@/components/calendar/CalendarView';
+
+type Tab = 'members' | 'calendar';
 
 export function HomePage() {
   const { setCurrentMember, lock } = useApp();
   const navigate = useNavigate();
+  const [tab, setTab] = useState<Tab>('members');
 
   function selectMember(member: typeof FAMILY_MEMBERS[0]) {
     setCurrentMember(member);
@@ -31,22 +36,52 @@ export function HomePage() {
             </svg>
           </button>
         </div>
+
+        {/* Tab bar */}
+        <div className="flex border-b border-slate-800">
+          <button
+            onClick={() => setTab('members')}
+            className={`flex-1 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+              tab === 'members'
+                ? 'border-sky-500 text-sky-400'
+                : 'border-transparent text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            Members
+          </button>
+          <button
+            onClick={() => setTab('calendar')}
+            className={`flex-1 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+              tab === 'calendar'
+                ? 'border-sky-500 text-sky-400'
+                : 'border-transparent text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            Calendar
+          </button>
+        </div>
       </header>
 
-      <main className="flex-1 px-4 py-8">
-        <p className="text-sm text-slate-400 mb-6 text-center">Who are you?</p>
-        <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-          {FAMILY_MEMBERS.map(member => (
-            <button
-              key={member.id}
-              onClick={() => selectMember(member)}
-              className="flex flex-col items-center gap-3 bg-slate-800 rounded-2xl p-5 active:scale-95 transition-all border border-slate-700 hover:border-slate-500"
-            >
-              <Avatar name={member.name} colour={member.colour} size="lg" />
-              <span className="text-sm font-medium text-white">{member.name}</span>
-            </button>
-          ))}
-        </div>
+      <main className="flex-1 px-4 py-6">
+        {tab === 'members' && (
+          <div>
+            <p className="text-sm text-slate-400 mb-5 text-center">Who are you?</p>
+            <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+              {FAMILY_MEMBERS.map(member => (
+                <button
+                  key={member.id}
+                  onClick={() => selectMember(member)}
+                  className="flex flex-col items-center gap-3 bg-slate-800 rounded-2xl p-5 active:scale-95 transition-all border border-slate-700 hover:border-slate-500"
+                >
+                  <Avatar name={member.name} colour={member.colour} size="lg" />
+                  <span className="text-sm font-medium text-white">{member.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'calendar' && <CalendarView />}
       </main>
     </div>
   );
