@@ -67,10 +67,11 @@ export function AddFlightPage() {
         .upload(path, pdfFile, { contentType: 'application/pdf', upsert: true });
 
       if (!uploadError) {
-        const { data: urlData } = supabase.storage.from('tickets').getPublicUrl(path);
+        // Store the storage path (not a public URL) — bucket is private.
+        // pdfCache.ts downloads via the authenticated Supabase client.
         await supabase
           .from('flights')
-          .update({ ticket_pdf_url: urlData.publicUrl })
+          .update({ ticket_pdf_url: path })
           .eq('id', inserted.id);
       }
     }

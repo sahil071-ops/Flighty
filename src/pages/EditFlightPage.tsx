@@ -59,8 +59,8 @@ export function EditFlightPage() {
         .from('tickets')
         .upload(path, pdfFile, { contentType: 'application/pdf', upsert: true });
       if (!uploadError) {
-        const { data: urlData } = supabase.storage.from('tickets').getPublicUrl(path);
-        await supabase.from('flights').update({ ticket_pdf_url: urlData.publicUrl }).eq('id', flight.id);
+        // Store the storage path (not a public URL) — bucket is private.
+        await supabase.from('flights').update({ ticket_pdf_url: path }).eq('id', flight.id);
       }
     }
 
