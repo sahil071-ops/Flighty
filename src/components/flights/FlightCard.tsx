@@ -4,7 +4,7 @@ import type { Member } from '@/data/members';
 import { Avatar } from '@/components/ui/Avatar';
 import {
   formatLocalTime,
-  formatLocalDateShort,
+  formatLocalDateCard,
   getTimezoneAbbr,
   getDurationString,
 } from '@/lib/timezone';
@@ -13,12 +13,13 @@ interface FlightCardProps {
   flight: Flight;
   member?: Member;
   showMember?: boolean;
+  grouped?: boolean; // true when rendered inside a TripGroup (removes outer rounding)
 }
 
-export function FlightCard({ flight, member, showMember = true }: FlightCardProps) {
+export function FlightCard({ flight, member, showMember = true, grouped = false }: FlightCardProps) {
   const depTime = formatLocalTime(flight.departure_datetime_utc, flight.departure_timezone);
   const arrTime = formatLocalTime(flight.arrival_datetime_utc, flight.arrival_timezone);
-  const depDate = formatLocalDateShort(flight.departure_datetime_utc, flight.departure_timezone);
+  const depDate = formatLocalDateCard(flight.departure_datetime_utc, flight.departure_timezone);
   const depAbbr = getTimezoneAbbr(flight.departure_datetime_utc, flight.departure_timezone);
   const arrAbbr = getTimezoneAbbr(flight.arrival_datetime_utc, flight.arrival_timezone);
   const duration = getDurationString(flight.departure_datetime_utc, flight.arrival_datetime_utc);
@@ -28,22 +29,21 @@ export function FlightCard({ flight, member, showMember = true }: FlightCardProp
   return (
     <Link
       to={`/flights/${flight.id}`}
-      className="block bg-slate-800 rounded-xl overflow-hidden hover:bg-slate-750 active:scale-[0.99] transition-all"
+      className={`block bg-slate-800 overflow-hidden hover:bg-slate-750 active:scale-[0.99] transition-all ${grouped ? '' : 'rounded-xl'}`}
     >
       {/* Colour accent bar */}
-      <div className="h-0.5" style={{ backgroundColor: colour }} />
+      {!grouped && <div className="h-0.5" style={{ backgroundColor: colour }} />}
 
       <div className="p-4">
         {/* Top row: member + date */}
-        {showMember && member && (
+        {showMember && member ? (
           <div className="flex items-center gap-2 mb-3">
             <Avatar name={member.name} colour={colour} size="sm" />
             <span className="text-xs text-slate-400 font-medium">{member.name}</span>
-            <span className="text-xs text-slate-500 ml-auto">{depDate}</span>
+            <span className="text-sm font-medium text-slate-300 ml-auto">{depDate}</span>
           </div>
-        )}
-        {!showMember && (
-          <div className="text-xs text-slate-500 mb-3">{depDate}</div>
+        ) : (
+          <div className="text-sm font-medium text-slate-300 mb-3">{depDate}</div>
         )}
 
         {/* Route row */}

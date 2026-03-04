@@ -43,6 +43,7 @@ export function AddFlightPage() {
   const [currentLegIndex, setCurrentLegIndex] = useState(0);
   const [multiLegTripId, setMultiLegTripId] = useState<string | null>(null);
   const [detectedMemberId, setDetectedMemberId] = useState<string | undefined>();
+  const [sourcePdf, setSourcePdf] = useState<File | null>(null);
 
   const isAdmin = currentMember?.isAdmin ?? false;
 
@@ -74,6 +75,8 @@ export function AddFlightPage() {
   }
 
   async function handleFormSubmit(data: FlightFormData, pdfFile?: File) {
+    // Use the form-uploaded PDF; fall back to the source PDF from parsing
+    const ticketFile = pdfFile ?? sourcePdf ?? undefined;
     const flightData = formDataToFlight(data);
 
     const { data: inserted, error } = await supabase
@@ -87,11 +90,11 @@ export function AddFlightPage() {
 
     if (error) throw new Error(error.message ?? JSON.stringify(error));
 
-    if (pdfFile && inserted) {
+    if (ticketFile && inserted) {
       const path = `flights/${inserted.id}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from('tickets')
-        .upload(path, pdfFile, { contentType: 'application/pdf', upsert: true });
+        .upload(path, ticketFile, { contentType: 'application/pdf', upsert: true });
 
       if (!uploadError) {
         await supabase
@@ -108,7 +111,8 @@ export function AddFlightPage() {
     }
   }
 
-  function handleExtracted(flights: ExtractedFlight[]) {
+  function handleExtracted(flights: ExtractedFlight[], file: File) {
+    setSourcePdf(file);
     setExtractedFlights(flights);
     setStep('form');
     setCurrentLegIndex(0);
@@ -194,6 +198,7 @@ export function AddFlightPage() {
               currentUserId={detectedMemberId ?? currentMember?.id ?? 'admin'}
               isAdmin={isAdmin}
               prefill={currentPrefill}
+              attachedPdfName={sourcePdf?.name}
               onSubmit={handleFormSubmit}
               submitLabel={
                 extractedFlights.length > 1 && currentLegIndex < extractedFlights.length - 1
