@@ -66,7 +66,7 @@ export function generateICS(flight: Flight, memberName: string): string {
     flight.terminal_departure ? `Departure Terminal: ${flight.terminal_departure}` : null,
     flight.gate ? `Gate: ${flight.gate}` : null,
     `Passenger: ${memberName}`,
-    flight.notes ? `Notes: ${flight.notes}` : null,
+    // notes are now trip-level, not flight-level
   ]
     .filter(Boolean)
     .join('\\n');

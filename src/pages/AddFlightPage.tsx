@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
@@ -11,51 +11,42 @@ import { FlightForm, formDataToFlight } from '@/components/flights/FlightForm';
 import type { FlightFormData } from '@/types';
 import type { ExtractedFlight } from '@/lib/claudeApi';
 
-type Step = 'choice' | 'pdf' | 'form';
+type Step = 'choice' | 'upload' | 'form';
 
-/**
- * Match an extracted passenger name to a hardcoded family member.
- * Handles airline format (SURNAME/FIRSTNAME MR), all-caps, accents.
- */
 function detectMemberId(passengerName: string | null | undefined): string | undefined {
   if (!passengerName) return undefined;
-  // Normalise: lowercase, strip accents, replace slashes/dashes with space
   const normalise = (s: string) =>
     s.toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[\/\-_]/g, ' ');
+      .replace(/[/\-_]/g, ' ');
   const haystack = normalise(passengerName);
   const words = haystack.split(/\s+/);
   return FAMILY_MEMBERS.find(m => {
     if (m.id === 'admin') return false;
     const needle = normalise(m.name);
-    // exact word match or substring match
     return words.includes(needle) || haystack.includes(needle);
   })?.id;
 }
 
 export function AddFlightPage() {
+  const { tripId } = useParams<{ tripId: string }>();
   const navigate = useNavigate();
   const { currentMember } = useApp();
   const { isOnline } = useOffline();
   const [step, setStep] = useState<Step>('choice');
   const [extractedFlights, setExtractedFlights] = useState<ExtractedFlight[]>([]);
   const [currentLegIndex, setCurrentLegIndex] = useState(0);
-  const [multiLegTripId, setMultiLegTripId] = useState<string | null>(null);
   const [detectedMemberId, setDetectedMemberId] = useState<string | undefined>();
-  const [sourcePdf, setSourcePdf] = useState<File | null>(null);
+  const [sourceFile, setSourceFile] = useState<File | null>(null);
 
   const isAdmin = currentMember?.isAdmin ?? false;
 
-  // Only admin can add flights
   if (!isAdmin) {
     return (
       <Layout title="Add flight" hideNav>
         <div className="px-4 py-8 text-center">
           <p className="text-slate-400">Only Admin can add flights.</p>
-          <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>
-            Go back
-          </Button>
+          <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>Go back</Button>
         </div>
       </Layout>
     );
@@ -66,66 +57,60 @@ export function AddFlightPage() {
       <Layout title="Add flight" hideNav>
         <div className="px-4 py-8 text-center">
           <p className="text-slate-400">You're offline. Adding flights requires a connection.</p>
-          <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>
-            Go back
-          </Button>
+          <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>Go back</Button>
         </div>
       </Layout>
     );
   }
 
-  async function handleFormSubmit(data: FlightFormData, pdfFile?: File) {
-    // Use the form-uploaded PDF; fall back to the source PDF from parsing
-    const ticketFile = pdfFile ?? sourcePdf ?? undefined;
+  async function handleFormSubmit(data: FlightFormData, ticketFile?: File) {
+    const file = ticketFile ?? sourceFile ?? undefined;
     const flightData = formDataToFlight(data);
 
     const { data: inserted, error } = await supabase
       .from('flights')
       .insert({
         ...flightData,
-        trip_id: multiLegTripId ?? null,
+        trip_id: tripId,
+        leg_order: currentLegIndex + 1,
       })
       .select()
       .single();
 
     if (error) throw new Error(error.message ?? JSON.stringify(error));
 
-    if (ticketFile && inserted) {
-      const path = `flights/${inserted.id}.pdf`;
+    if (file && inserted) {
+      const ext = file.type === 'application/pdf' ? 'pdf' : (file.type.split('/')[1] || 'jpg');
+      const path = `flights/${inserted.id}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('tickets')
-        .upload(path, ticketFile, { contentType: 'application/pdf', upsert: true });
+        .upload(path, file, { contentType: file.type, upsert: true });
 
       if (!uploadError) {
-        await supabase
-          .from('flights')
-          .update({ ticket_pdf_url: path })
-          .eq('id', inserted.id);
+        await supabase.from('flights').update({ ticket_pdf_url: path }).eq('id', inserted.id);
       }
     }
 
     if (extractedFlights.length > 1 && currentLegIndex < extractedFlights.length - 1) {
       setCurrentLegIndex(i => i + 1);
     } else {
-      navigate(-1);
+      navigate(tripId ? `/trips/${tripId}` : '/');
     }
   }
 
   function handleExtracted(flights: ExtractedFlight[], file: File) {
-    setSourcePdf(file);
+    setSourceFile(file);
     setExtractedFlights(flights);
     setStep('form');
     setCurrentLegIndex(0);
-    setMultiLegTripId(flights.length > 1 ? crypto.randomUUID() : null);
     setDetectedMemberId(detectMemberId(flights[0]?.passenger_name));
   }
 
-  const currentPrefill =
-    extractedFlights.length > 0 ? extractedFlights[currentLegIndex] : undefined;
+  const currentPrefill = extractedFlights.length > 0 ? extractedFlights[currentLegIndex] : undefined;
 
   return (
     <Layout
-      title={step === 'choice' ? 'Add flight' : step === 'pdf' ? 'Upload booking PDF' : 'Flight details'}
+      title={step === 'choice' ? 'Add flight' : step === 'upload' ? 'Upload booking' : 'Flight details'}
       hideNav
       headerRight={
         <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white p-2 -mr-2">
@@ -141,7 +126,7 @@ export function AddFlightPage() {
             <h2 className="text-xl font-semibold text-white">How would you like to add this flight?</h2>
 
             <button
-              onClick={() => setStep('pdf')}
+              onClick={() => setStep('upload')}
               className="bg-slate-800 rounded-xl p-5 text-left border border-slate-700 hover:border-sky-600 active:scale-[0.99] transition-all"
             >
               <div className="flex items-start gap-4">
@@ -151,8 +136,8 @@ export function AddFlightPage() {
                   </svg>
                 </div>
                 <div>
-                  <div className="font-semibold text-white mb-1">Upload booking PDF</div>
-                  <div className="text-sm text-slate-400">AI extracts all flight details automatically. Works with most airline booking confirmations.</div>
+                  <div className="font-semibold text-white mb-1">Upload booking confirmation</div>
+                  <div className="text-sm text-slate-400">AI extracts all flight details automatically. Supports PDF, JPG, PNG, and screenshots.</div>
                   <div className="text-xs text-sky-400 mt-2 font-medium">Recommended</div>
                 </div>
               </div>
@@ -177,7 +162,7 @@ export function AddFlightPage() {
           </div>
         )}
 
-        {step === 'pdf' && (
+        {step === 'upload' && (
           <PDFUpload
             onExtracted={handleExtracted}
             onSkip={() => setStep('form')}
@@ -198,7 +183,7 @@ export function AddFlightPage() {
               currentUserId={detectedMemberId ?? currentMember?.id ?? 'admin'}
               isAdmin={isAdmin}
               prefill={currentPrefill}
-              attachedPdfName={sourcePdf?.name}
+              attachedFileName={sourceFile?.name}
               onSubmit={handleFormSubmit}
               submitLabel={
                 extractedFlights.length > 1 && currentLegIndex < extractedFlights.length - 1
