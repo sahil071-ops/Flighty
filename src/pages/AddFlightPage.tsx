@@ -13,6 +13,27 @@ import type { ExtractedFlight } from '@/lib/claudeApi';
 
 type Step = 'choice' | 'pdf' | 'form';
 
+/**
+ * Match an extracted passenger name to a hardcoded family member.
+ * Handles airline format (SURNAME/FIRSTNAME MR), all-caps, accents.
+ */
+function detectMemberId(passengerName: string | null | undefined): string | undefined {
+  if (!passengerName) return undefined;
+  // Normalise: lowercase, strip accents, replace slashes/dashes with space
+  const normalise = (s: string) =>
+    s.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\/\-_]/g, ' ');
+  const haystack = normalise(passengerName);
+  const words = haystack.split(/\s+/);
+  return FAMILY_MEMBERS.find(m => {
+    if (m.id === 'admin') return false;
+    const needle = normalise(m.name);
+    // exact word match or substring match
+    return words.includes(needle) || haystack.includes(needle);
+  })?.id;
+}
+
 export function AddFlightPage() {
   const navigate = useNavigate();
   const { currentMember } = useApp();
@@ -21,6 +42,7 @@ export function AddFlightPage() {
   const [extractedFlights, setExtractedFlights] = useState<ExtractedFlight[]>([]);
   const [currentLegIndex, setCurrentLegIndex] = useState(0);
   const [multiLegTripId, setMultiLegTripId] = useState<string | null>(null);
+  const [detectedMemberId, setDetectedMemberId] = useState<string | undefined>();
 
   const isAdmin = currentMember?.isAdmin ?? false;
 
@@ -63,7 +85,7 @@ export function AddFlightPage() {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throw new Error(error.message ?? JSON.stringify(error));
 
     if (pdfFile && inserted) {
       const path = `flights/${inserted.id}.pdf`;
@@ -91,6 +113,7 @@ export function AddFlightPage() {
     setStep('form');
     setCurrentLegIndex(0);
     setMultiLegTripId(flights.length > 1 ? crypto.randomUUID() : null);
+    setDetectedMemberId(detectMemberId(flights[0]?.passenger_name));
   }
 
   const currentPrefill =
@@ -166,8 +189,9 @@ export function AddFlightPage() {
               </div>
             )}
             <FlightForm
+              key={`leg-${currentLegIndex}`}
               members={FAMILY_MEMBERS}
-              currentUserId={currentMember?.id ?? 'admin'}
+              currentUserId={detectedMemberId ?? currentMember?.id ?? 'admin'}
               isAdmin={isAdmin}
               prefill={currentPrefill}
               onSubmit={handleFormSubmit}

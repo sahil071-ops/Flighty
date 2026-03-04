@@ -1,4 +1,5 @@
 export interface ExtractedFlight {
+  passenger_name: string | null;
   flight_number: string | null;
   airline: string | null;
   departure_airport_code: string | null;
@@ -17,7 +18,7 @@ export interface ExtractedFlight {
   terminal_arrival: string | null;
 }
 
-const SYSTEM_PROMPT = `You are a flight booking parser. Extract all flight details from this booking confirmation PDF and return ONLY a JSON array (no markdown, no preamble). Each element represents one flight leg with these fields: flight_number, airline, departure_airport_code, departure_airport_name, departure_city, departure_date (YYYY-MM-DD), departure_time (HH:MM 24hr local), arrival_airport_code, arrival_airport_name, arrival_city, arrival_date (YYYY-MM-DD), arrival_time (HH:MM 24hr local), booking_reference, seat (or null), terminal_departure (or null), terminal_arrival (or null). If any field cannot be determined, use null.`;
+const SYSTEM_PROMPT = `You are a flight booking parser. Extract all flight details from this booking confirmation PDF and return ONLY a JSON array (no markdown, no preamble). Each element represents one flight leg with these fields: passenger_name (the passenger's full name as printed, or null), flight_number, airline, departure_airport_code, departure_airport_name, departure_city, departure_date (YYYY-MM-DD), departure_time (HH:MM 24hr local), arrival_airport_code, arrival_airport_name, arrival_city, arrival_date (YYYY-MM-DD), arrival_time (HH:MM 24hr local), booking_reference, seat (or null), terminal_departure (or null), terminal_arrival (or null). If any field cannot be determined, use null.`;
 
 export async function extractFlightsFromPDF(
   pdfBase64: string
