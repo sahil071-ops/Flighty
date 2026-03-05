@@ -1,7 +1,12 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import type { Flight, Trip, Hotel, TripDocument } from '@/types';
+import type { Flight, Trip, Hotel, TripDocument, MemberDocument } from '@/types';
 
 interface FamilyFlightsDB extends DBSchema {
+  member_documents: {
+    key: string;
+    value: MemberDocument;
+    indexes: { 'by-member': string; 'by-expiry': string };
+  };
   trips: {
     key: string;
     value: Trip;
@@ -35,7 +40,7 @@ let db: IDBPDatabase<FamilyFlightsDB> | null = null;
 
 async function getDB(): Promise<IDBPDatabase<FamilyFlightsDB>> {
   if (db) return db;
-  db = await openDB<FamilyFlightsDB>('family-flights', 3, {
+  db = await openDB<FamilyFlightsDB>('family-flights', 4, {
     upgrade(database, oldVersion) {
       if (oldVersion < 1) {
         const flightStore = database.createObjectStore('flights', { keyPath: 'id' });
@@ -47,6 +52,13 @@ async function getDB(): Promise<IDBPDatabase<FamilyFlightsDB>> {
         const raw = database as unknown as IDBDatabase;
         if (raw.objectStoreNames.contains('profiles')) {
           raw.deleteObjectStore('profiles');
+        }
+      }
+      if (oldVersion < 4) {
+        if (!database.objectStoreNames.contains('member_documents')) {
+          const ds = database.createObjectStore('member_documents', { keyPath: 'id' });
+          ds.createIndex('by-member', 'family_member_id');
+          ds.createIndex('by-expiry', 'expiry_date');
         }
       }
       if (oldVersion < 3) {
@@ -157,11 +169,36 @@ export async function getCachedTripDocuments(): Promise<TripDocument[]> {
   return database.getAll('trip_documents');
 }
 
+// ── Member Documents ───────────────────────────────────────────────────────────
+
+export async function cacheMemberDocuments(docs: MemberDocument[]): Promise<void> {
+  const database = await getDB();
+  const tx = database.transaction('member_documents', 'readwrite');
+  await Promise.all(docs.map(d => tx.store.put(d)));
+  await tx.done;
+}
+
+export async function getCachedMemberDocuments(): Promise<MemberDocument[]> {
+  const database = await getDB();
+  return database.getAll('member_documents');
+}
+
+export async function getCachedMemberDocument(id: string): Promise<MemberDocument | undefined> {
+  const database = await getDB();
+  return database.get('member_documents', id);
+}
+
+export async function deleteCachedMemberDocument(id: string): Promise<void> {
+  const database = await getDB();
+  await database.delete('member_documents', id);
+}
+
 // ── Clear all ──────────────────────────────────────────────────────────────────
 
 export async function clearAllCache(): Promise<void> {
   const database = await getDB();
   await Promise.all([
+    database.clear('member_documents'),
     database.clear('trips'),
     database.clear('flights'),
     database.clear('hotels'),

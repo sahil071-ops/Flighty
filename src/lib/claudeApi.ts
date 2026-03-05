@@ -160,6 +160,79 @@ export async function extractHotelFromFile(file: File): Promise<ExtractedHotel> 
   }
 }
 
+// ── Document extraction types ──────────────────────────────────────────────────
+
+export interface ExtractedPassport {
+  passport_number: string | null;
+  passport_country_of_issue: string | null;
+  passport_nationality: string | null;
+  passport_expiry_date: string | null; // YYYY-MM-DD
+  passport_dob: string | null;
+  full_name: string | null;
+}
+
+export interface ExtractedVisa {
+  visa_country: string | null;
+  visa_type: string | null;
+  visa_entry_type: string | null;
+  visa_issue_date: string | null;
+  visa_expiry_date: string | null;
+  visa_duration_of_stay: string | null;
+  visa_issuing_country: string | null;
+  visa_number: string | null;
+}
+
+export interface ExtractedInsurance {
+  insurance_provider: string | null;
+  insurance_policy_number: string | null;
+  insurance_start_date: string | null;
+  insurance_end_date: string | null;
+  insurance_coverage: string | null;
+  insurance_emergency_number: string | null;
+  insured_name: string | null;
+}
+
+export interface ExtractedOtherDoc {
+  label: string | null;
+  expiry_date: string | null;
+  notes: string | null;
+}
+
+const PASSPORT_SYSTEM_PROMPT = `You are a passport document parser. Extract all details from this passport image or scan and return ONLY a JSON object (no markdown, no preamble) with these fields: passport_number, passport_country_of_issue, passport_nationality, passport_expiry_date (YYYY-MM-DD), passport_dob (YYYY-MM-DD), full_name. If any field cannot be determined, use null.`;
+
+const VISA_SYSTEM_PROMPT = `You are a visa document parser. Extract all details from this visa stamp, sticker, or confirmation document and return ONLY a JSON object (no markdown, no preamble) with these fields: visa_country (country the visa grants entry to), visa_type (Tourist/Business/Transit/etc), visa_entry_type (Single/Multiple/Transit), visa_issue_date (YYYY-MM-DD), visa_expiry_date (YYYY-MM-DD), visa_duration_of_stay (e.g. "30 days per entry"), visa_issuing_country, visa_number (if visible). If any field cannot be determined, use null.`;
+
+const INSURANCE_SYSTEM_PROMPT = `You are a travel insurance document parser. Extract all details from this insurance certificate or policy document and return ONLY a JSON object (no markdown, no preamble) with these fields: insurance_provider, insurance_policy_number, insurance_start_date (YYYY-MM-DD), insurance_end_date (YYYY-MM-DD), insurance_coverage (coverage territory description), insurance_emergency_number, insured_name. If any field cannot be determined, use null.`;
+
+const OTHER_DOC_SYSTEM_PROMPT = `You are a travel document parser. Extract any relevant details from this document and return ONLY a JSON object (no markdown, no preamble) with these fields: label (a short descriptive name for this document), expiry_date (YYYY-MM-DD if any expiry is visible, otherwise null), notes (any other important details in 1-2 sentences). If any field cannot be determined, use null.`;
+
+async function callClaudeForDoc<T>(systemPrompt: string, file: File, userText: string): Promise<T> {
+  const content = await callClaude(systemPrompt, file, userText);
+  try {
+    const parsed = JSON.parse(stripMarkdown(content));
+    if (typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Expected object');
+    return parsed as T;
+  } catch {
+    throw new Error(`Failed to parse Claude document response: ${content.slice(0, 200)}`);
+  }
+}
+
+export async function extractPassportFromFile(file: File): Promise<ExtractedPassport> {
+  return callClaudeForDoc<ExtractedPassport>(PASSPORT_SYSTEM_PROMPT, file, 'Extract all passport details from this document.');
+}
+
+export async function extractVisaFromFile(file: File): Promise<ExtractedVisa> {
+  return callClaudeForDoc<ExtractedVisa>(VISA_SYSTEM_PROMPT, file, 'Extract all visa details from this document.');
+}
+
+export async function extractInsuranceFromFile(file: File): Promise<ExtractedInsurance> {
+  return callClaudeForDoc<ExtractedInsurance>(INSURANCE_SYSTEM_PROMPT, file, 'Extract all insurance details from this document.');
+}
+
+export async function extractOtherDocFromFile(file: File): Promise<ExtractedOtherDoc> {
+  return callClaudeForDoc<ExtractedOtherDoc>(OTHER_DOC_SYSTEM_PROMPT, file, 'Extract any relevant details from this document.');
+}
+
 /** @deprecated Use extractFlightsFromFile(file) instead. */
 export async function extractFlightsFromPDF(pdfBase64: string): Promise<ExtractedFlight[]> {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string;

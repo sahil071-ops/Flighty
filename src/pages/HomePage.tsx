@@ -4,6 +4,9 @@ import { useApp, FAMILY_MEMBERS } from '@/context/AppContext';
 import { Avatar } from '@/components/ui/Avatar';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { ThisWeekBanner } from '@/components/trips/ThisWeekBanner';
+import { ExpiryWarningBanner } from '@/components/documents/ExpiryWarningBanner';
+import { BottomNav } from '@/components/layout/BottomNav';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 
 type Tab = 'members' | 'calendar';
 
@@ -19,6 +22,7 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
+      <OfflineBanner />
       <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
@@ -63,10 +67,11 @@ export function HomePage() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-6">
+      <main className="flex-1 px-4 py-6 pb-24">
         {tab === 'members' && (
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4">
             <ThisWeekBanner />
+            <ExpiryWarningBanner />
             <div>
               <p className="text-sm text-slate-400 mb-5 text-center">Who are you?</p>
               <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
@@ -87,6 +92,8 @@ export function HomePage() {
 
         {tab === 'calendar' && <CalendarView />}
       </main>
+
+      <BottomNav />
     </div>
   );
 }
