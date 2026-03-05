@@ -39,19 +39,6 @@ export function AddFlightPage() {
   const [detectedMemberId, setDetectedMemberId] = useState<string | undefined>();
   const [sourceFile, setSourceFile] = useState<File | null>(null);
 
-  const isAdmin = currentMember?.isAdmin ?? false;
-
-  if (!isAdmin) {
-    return (
-      <Layout title="Add flight" hideNav>
-        <div className="px-4 py-8 text-center">
-          <p className="text-slate-400">Only Admin can add flights.</p>
-          <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>Go back</Button>
-        </div>
-      </Layout>
-    );
-  }
-
   if (!isOnline) {
     return (
       <Layout title="Add flight" hideNav>
@@ -179,9 +166,8 @@ export function AddFlightPage() {
             )}
             <FlightForm
               key={`leg-${currentLegIndex}`}
-              members={FAMILY_MEMBERS}
-              currentUserId={detectedMemberId ?? currentMember?.id ?? 'admin'}
-              isAdmin={isAdmin}
+              members={FAMILY_MEMBERS.filter(m => m.id !== 'admin')}
+              currentUserId={detectedMemberId ?? currentMember?.id ?? ''}
               prefill={currentPrefill}
               attachedFileName={sourceFile?.name}
               onSubmit={handleFormSubmit}

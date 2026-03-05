@@ -29,8 +29,6 @@ export function MemberDocumentsPage() {
   const [loading, setLoading] = useState(true);
 
   const member = getMember(memberId ?? '');
-  const isAdmin = currentMember?.isAdmin ?? false;
-
   useEffect(() => {
     if (!memberId) return;
     load();
@@ -87,7 +85,7 @@ export function MemberDocumentsPage() {
           <span className="text-base font-semibold text-white flex-1">
             {member?.name ?? memberId}
           </span>
-          {isAdmin && isOnline && (
+          {isOnline && (
             <button
               onClick={() => navigate('/documents/add', { state: { memberId } })}
               className="w-8 h-8 bg-sky-500 rounded-full flex items-center justify-center text-white hover:bg-sky-400 transition-colors"
@@ -108,7 +106,7 @@ export function MemberDocumentsPage() {
           <div className="text-center py-16">
             <div className="text-5xl mb-4">🪪</div>
             <h2 className="text-lg font-semibold text-white mb-2">No documents yet</h2>
-            {isAdmin && isOnline ? (
+            {isOnline ? (
               <button
                 onClick={() => navigate('/documents/add', { state: { memberId } })}
                 className="inline-flex items-center gap-2 bg-sky-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-sky-400 transition-colors mt-4"

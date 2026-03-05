@@ -19,8 +19,6 @@ export function EditFlightPage() {
   const [flight, setFlight] = useState<Flight | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isAdmin = currentMember?.isAdmin ?? false;
-
   useEffect(() => {
     if (!id) return;
     supabase.from('flights').select('*').eq('id', id).maybeSingle().then(({ data }) => {
@@ -109,9 +107,8 @@ export function EditFlightPage() {
           <p className="text-slate-400 text-center py-8">Flight not found.</p>
         ) : (
           <FlightForm
-            members={FAMILY_MEMBERS}
-            currentUserId={currentMember?.id ?? 'admin'}
-            isAdmin={isAdmin}
+            members={FAMILY_MEMBERS.filter(m => m.id !== 'admin')}
+            currentUserId={currentMember?.id ?? ''}
             initialData={flightToFormData(flight)}
             onSubmit={handleSubmit}
             submitLabel="Save changes"

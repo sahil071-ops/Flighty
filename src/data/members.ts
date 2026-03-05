@@ -2,17 +2,16 @@ export interface Member {
   id: string;
   name: string;
   colour: string;
-  isAdmin: boolean;
 }
 
 export const FAMILY_MEMBERS: Member[] = [
-  { id: 'sahil',    name: 'Sahil',    colour: '#0ea5e9', isAdmin: false },
-  { id: 'manmayee', name: 'Manmayee', colour: '#10b981', isAdmin: false },
-  { id: 'kanderp',  name: 'Kanderp',  colour: '#8b5cf6', isAdmin: false },
-  { id: 'tehmina',  name: 'Tehmina',  colour: '#f59e0b', isAdmin: false },
-  { id: 'nirali',   name: 'Nirali',   colour: '#ec4899', isAdmin: false },
-  { id: 'alfonso',  name: 'Alfonso',  colour: '#ef4444', isAdmin: false },
-  { id: 'admin',    name: 'Admin',    colour: '#64748b', isAdmin: true  },
+  { id: 'sahil',    name: 'Sahil',    colour: '#0ea5e9' },
+  { id: 'manmayee', name: 'Manmayee', colour: '#10b981' },
+  { id: 'kanderp',  name: 'Kanderp',  colour: '#8b5cf6' },
+  { id: 'tehmina',  name: 'Tehmina',  colour: '#f59e0b' },
+  { id: 'nirali',   name: 'Nirali',   colour: '#ec4899' },
+  { id: 'alfonso',  name: 'Alfonso',  colour: '#ef4444' },
+  { id: 'admin',    name: 'Admin',    colour: '#64748b' },
 ];
 
 export function getMember(id: string): Member | undefined {

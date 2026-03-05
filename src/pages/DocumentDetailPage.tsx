@@ -57,8 +57,6 @@ export function DocumentDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isAdmin = currentMember?.isAdmin ?? false;
-
   useEffect(() => {
     if (!docId) return;
     loadDoc();
@@ -287,7 +285,7 @@ export function DocumentDetailPage() {
         )}
 
         {/* Actions */}
-        {isAdmin && isOnline && (
+        {isOnline && (
           <Button variant="danger" className="w-full" onClick={handleDelete} loading={deleting}>
             Delete document
           </Button>

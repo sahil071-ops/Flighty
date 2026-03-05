@@ -16,7 +16,7 @@ import {
 } from '@/lib/claudeApi';
 import type { DocumentType, MemberDocument } from '@/types';
 
-const DISPLAY_MEMBERS = FM.filter(m => !m.isAdmin);
+const DISPLAY_MEMBERS = FM.filter(m => m.id !== 'admin');
 
 type DocTypeOption = { value: DocumentType; label: string; icon: string };
 const DOC_TYPES: DocTypeOption[] = [
@@ -45,13 +45,11 @@ export function AddDocumentPage() {
   const { currentMember } = useApp();
   const { isOnline } = useOffline();
 
-  const isAdmin = currentMember?.isAdmin ?? false;
-
   // Pre-filled member from state (e.g. coming from MemberDocumentsPage)
   const prefilledMemberId: string | undefined = (location.state as { memberId?: string } | null)?.memberId;
 
   const [selectedMemberId, setSelectedMemberId] = useState<string>(
-    prefilledMemberId ?? (isAdmin ? '' : (currentMember?.id ?? ''))
+    prefilledMemberId ?? currentMember?.id ?? ''
   );
   const [docType, setDocType] = useState<DocumentType | null>(null);
   const [form, setForm] = useState<FormState>({});
@@ -61,19 +59,8 @@ export function AddDocumentPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [step, setStep] = useState<'member' | 'type' | 'form'>(
-    prefilledMemberId || !isAdmin ? 'type' : 'member'
+    prefilledMemberId ? 'type' : 'member'
   );
-
-  if (!isAdmin) {
-    return (
-      <Layout title="Add Document" hideNav>
-        <div className="px-4 py-8 text-center">
-          <p className="text-slate-400">Only Admin can add documents.</p>
-          <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>Go back</Button>
-        </div>
-      </Layout>
-    );
-  }
 
   if (!isOnline) {
     return (

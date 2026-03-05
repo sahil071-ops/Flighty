@@ -20,23 +20,10 @@ export function AddTripPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>(
-    currentMember && !currentMember.isAdmin ? [currentMember.id] : []
+    currentMember && currentMember.id !== 'admin' ? [currentMember.id] : []
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const isAdmin = currentMember?.isAdmin ?? false;
-
-  if (!isAdmin) {
-    return (
-      <Layout title="New trip" hideNav>
-        <div className="px-4 py-8 text-center">
-          <p className="text-slate-400">Only Admin can create trips.</p>
-          <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>Go back</Button>
-        </div>
-      </Layout>
-    );
-  }
 
   if (!isOnline) {
     return (
@@ -84,7 +71,7 @@ export function AddTripPage() {
     }
   }
 
-  const displayMembers = FAMILY_MEMBERS.filter(m => !m.isAdmin);
+  const displayMembers = FAMILY_MEMBERS.filter(m => m.id !== 'admin');
 
   return (
     <Layout

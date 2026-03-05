@@ -9,7 +9,6 @@ import type { ExtractedFlight } from '@/lib/claudeApi';
 interface FlightFormProps {
   members: Member[];
   currentUserId: string;
-  isAdmin: boolean;
   prefill?: Partial<ExtractedFlight>;
   initialData?: Partial<FlightFormData>;
   onSubmit: (data: FlightFormData, ticketFile?: File) => Promise<void>;
@@ -35,7 +34,6 @@ const ACCEPTED_TICKET_TYPES = 'application/pdf,image/jpeg,image/png,image/webp';
 export function FlightForm({
   members,
   currentUserId,
-  isAdmin,
   prefill,
   initialData,
   onSubmit,
@@ -139,15 +137,13 @@ export function FlightForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5 pb-8">
-      {isAdmin && (
-        <Field label="This flight is for">
-          <select className={inputClass} value={form.family_member_id} onChange={e => set('family_member_id', e.target.value)}>
-            {members.map(m => (
-              <option key={m.id} value={m.id}>{m.name}{m.id === currentUserId ? ' (you)' : ''}</option>
-            ))}
-          </select>
-        </Field>
-      )}
+      <Field label="This flight is for">
+        <select className={inputClass} value={form.family_member_id} onChange={e => set('family_member_id', e.target.value)}>
+          {members.map(m => (
+            <option key={m.id} value={m.id}>{m.name}{m.id === currentUserId ? ' (you)' : ''}</option>
+          ))}
+        </select>
+      </Field>
 
       {/* Flight number + date */}
       <div className="flex gap-3">

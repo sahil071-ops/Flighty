@@ -22,9 +22,6 @@ export function MyFlightsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const member = getMember(id ?? '');
-  const isAdmin = currentMember?.isAdmin ?? false;
-  const isAdminView = isAdmin && id === 'admin';
-
   useEffect(() => {
     load();
   }, [id, isOnline]);
@@ -35,7 +32,7 @@ export function MyFlightsPage() {
     try {
       if (isOnline) {
         let tripsQuery = supabase.from('trips').select('*').order('start_date', { ascending: false });
-        if (!isAdminView && id) {
+        if (id) {
           tripsQuery = tripsQuery.contains('family_member_ids', [id]);
         }
         const { data: tripsData, error: tripsError } = await tripsQuery;
@@ -75,9 +72,7 @@ export function MyFlightsPage() {
           getCachedFlights(),
           getCachedHotels(),
         ]);
-        const filtered = isAdminView
-          ? cachedTrips
-          : cachedTrips.filter(t => id && t.family_member_ids.includes(id));
+        const filtered = cachedTrips.filter(t => id && t.family_member_ids.includes(id));
         setTrips(filtered.sort((a, b) => b.start_date.localeCompare(a.start_date)));
 
         const fMap = new Map<string, Flight[]>();
@@ -104,7 +99,7 @@ export function MyFlightsPage() {
     }
   }
 
-  if (!member && !isAdminView) {
+  if (!member) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center px-4">
         <p className="text-slate-400">Member not found.</p>
@@ -134,7 +129,7 @@ export function MyFlightsPage() {
           <span className="text-base font-semibold text-white flex-1">
             {member?.name ?? 'All trips'}
           </span>
-          {isAdmin && isOnline && (
+          {isOnline && (
             <Link
               to="/trips/new"
               className="w-8 h-8 bg-sky-500 rounded-full flex items-center justify-center text-white hover:bg-sky-400 transition-colors"
@@ -163,15 +158,13 @@ export function MyFlightsPage() {
             <h2 className="text-lg font-semibold text-white mb-2">No trips yet</h2>
             {!isOnline ? (
               <p className="text-slate-500 text-sm">You're offline — no cached trips found.</p>
-            ) : isAdmin ? (
+            ) : (
               <Link
                 to="/trips/new"
                 className="inline-flex items-center gap-2 bg-sky-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-sky-400 transition-colors mt-4"
               >
                 Add a trip
               </Link>
-            ) : (
-              <p className="text-slate-500 text-sm">No trips added yet.</p>
             )}
           </div>
         ) : (
