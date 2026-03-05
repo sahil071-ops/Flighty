@@ -7,6 +7,7 @@ import { ThisWeekBanner } from '@/components/trips/ThisWeekBanner';
 import { ExpiryWarningBanner } from '@/components/documents/ExpiryWarningBanner';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { SyncIndicator } from '@/components/ui/SyncIndicator';
 
 type Tab = 'members' | 'calendar';
 
@@ -93,6 +94,7 @@ export function HomePage() {
         {tab === 'calendar' && <CalendarView />}
       </main>
 
+      <SyncIndicator />
       <BottomNav />
     </div>
   );
