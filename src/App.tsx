@@ -11,6 +11,10 @@ import { EditFlightPage } from '@/pages/EditFlightPage';
 import { AddTripPage } from '@/pages/AddTripPage';
 import { TripDetailPage } from '@/pages/TripDetailPage';
 import { AddHotelPage } from '@/pages/AddHotelPage';
+import { DocumentsPage } from '@/pages/DocumentsPage';
+import { MemberDocumentsPage } from '@/pages/MemberDocumentsPage';
+import { AddDocumentPage } from '@/pages/AddDocumentPage';
+import { DocumentDetailPage } from '@/pages/DocumentDetailPage';
 
 function AppRoutes() {
   const { isUnlocked } = useApp();
@@ -21,14 +25,26 @@ function AppRoutes() {
 
   return (
     <Routes>
+      {/* Home */}
       <Route path="/" element={<HomePage />} />
       <Route path="/member/:id" element={<MyFlightsPage />} />
+
+      {/* Trips */}
       <Route path="/trips/new" element={<AddTripPage />} />
       <Route path="/trips/:tripId" element={<TripDetailPage />} />
       <Route path="/trips/:tripId/flights/add" element={<AddFlightPage />} />
       <Route path="/trips/:tripId/hotels/add" element={<AddHotelPage />} />
+
+      {/* Flights */}
       <Route path="/flights/:id" element={<FlightDetailPage />} />
       <Route path="/flights/:id/edit" element={<EditFlightPage />} />
+
+      {/* Documents */}
+      <Route path="/documents" element={<DocumentsPage />} />
+      <Route path="/documents/member/:memberId" element={<MemberDocumentsPage />} />
+      <Route path="/documents/add" element={<AddDocumentPage />} />
+      <Route path="/documents/view/:docId" element={<DocumentDetailPage />} />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -1,3 +1,66 @@
+// ── Member Documents ───────────────────────────────────────────────────────────
+
+export type DocumentType = 'passport' | 'visa' | 'travel_insurance' | 'other';
+
+export interface MemberDocument {
+  id: string;
+  family_member_id: string;        // text slug e.g. 'sahil'
+  document_type: DocumentType;
+  label: string;
+  // Passport
+  passport_number: string | null;
+  passport_country_of_issue: string | null;
+  passport_nationality: string | null;
+  passport_expiry_date: string | null; // YYYY-MM-DD
+  passport_dob: string | null;
+  // Visa
+  visa_country: string | null;
+  visa_type: string | null;
+  visa_entry_type: string | null;
+  visa_issue_date: string | null;
+  visa_expiry_date: string | null;
+  visa_duration_of_stay: string | null;
+  visa_issuing_country: string | null;
+  // Travel insurance
+  insurance_provider: string | null;
+  insurance_policy_number: string | null;
+  insurance_start_date: string | null;
+  insurance_end_date: string | null;
+  insurance_coverage: string | null;
+  insurance_emergency_number: string | null;
+  // Unified
+  expiry_date: string | null;
+  notes: string | null;
+  file_url: string | null;
+  file_type: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ExpiryStatus = 'ok' | 'soon' | 'urgent' | 'expired';
+
+/** Returns expiry status for a document, or null if no expiry set. */
+export function getExpiryStatus(expiryDate: string | null): ExpiryStatus | null {
+  if (!expiryDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const exp = new Date(expiryDate + 'T00:00:00');
+  const days = Math.round((exp.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return 'expired';
+  if (days <= 30) return 'urgent';
+  if (days <= 90) return 'soon';
+  return 'ok';
+}
+
+/** Days until expiry (negative if expired), or null if no expiry. */
+export function daysUntilExpiry(expiryDate: string | null): number | null {
+  if (!expiryDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const exp = new Date(expiryDate + 'T00:00:00');
+  return Math.round((exp.getTime() - today.getTime()) / 86400000);
+}
+
 // ── Top-level entity ───────────────────────────────────────────────────────────
 
 export interface Trip {
