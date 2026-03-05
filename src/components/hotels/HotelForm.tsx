@@ -10,7 +10,6 @@ const ACCEPTED_TYPES = 'application/pdf,image/jpeg,image/png,image/webp';
 interface HotelFormProps {
   members: Member[];
   currentUserId: string;
-  isAdmin: boolean;
   initialData?: Partial<HotelFormData>;
   onSubmit: (data: HotelFormData, voucherFile?: File) => Promise<void>;
   submitLabel?: string;
@@ -49,7 +48,7 @@ function applyExtracted(extracted: ExtractedHotel, currentUserId: string): Hotel
   };
 }
 
-export function HotelForm({ members, currentUserId, isAdmin, initialData, onSubmit, submitLabel = 'Save hotel' }: HotelFormProps) {
+export function HotelForm({ members, currentUserId, initialData, onSubmit, submitLabel = 'Save hotel' }: HotelFormProps) {
   const [form, setForm] = useState<HotelFormData>({
     family_member_id: initialData?.family_member_id ?? currentUserId,
     hotel_name: initialData?.hotel_name ?? '',
@@ -140,15 +139,13 @@ export function HotelForm({ members, currentUserId, isAdmin, initialData, onSubm
         </div>
       )}
 
-      {isAdmin && (
-        <Field label="This hotel is for">
-          <select className={inputClass} value={form.family_member_id} onChange={e => set('family_member_id', e.target.value)}>
-            {members.map(m => (
-              <option key={m.id} value={m.id}>{m.name}{m.id === currentUserId ? ' (you)' : ''}</option>
-            ))}
-          </select>
-        </Field>
-      )}
+      <Field label="This hotel is for">
+        <select className={inputClass} value={form.family_member_id} onChange={e => set('family_member_id', e.target.value)}>
+          {members.map(m => (
+            <option key={m.id} value={m.id}>{m.name}{m.id === currentUserId ? ' (you)' : ''}</option>
+          ))}
+        </select>
+      </Field>
 
       <Field label="Hotel name *">
         <input type="text" className={inputClass} placeholder="e.g. Taj Dubai" required

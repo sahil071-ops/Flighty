@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { BottomNav } from './BottomNav';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { SyncIndicator } from '@/components/ui/SyncIndicator';
 
 interface LayoutProps {
   children: ReactNode;
@@ -24,6 +25,7 @@ export function Layout({ children, title, headerRight, hideNav = false }: Layout
       <main className={`flex-1 overflow-y-auto ${hideNav ? '' : 'pb-20'}`}>
         {children}
       </main>
+      <SyncIndicator />
       {!hideNav && <BottomNav />}
     </div>
   );

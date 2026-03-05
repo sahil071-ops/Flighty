@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { FAMILY_MEMBERS, getMember, type Member } from '@/data/members';
+import { syncAllFiles, registerVisibilitySync } from '@/lib/backgroundSync';
 
 const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD as string | undefined ?? 'Axis@149';
 const UNLOCK_KEY = 'ff_unlocked';
@@ -25,11 +26,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return id ? (getMember(id) ?? null) : null;
   });
 
-  // On load, if already unlocked, ensure we have an anonymous Supabase session
-  // (needed for PDF storage operations).
+  // On load: ensure anonymous session, then kick off background file sync.
   useEffect(() => {
-    if (isUnlocked) ensureAnonSession();
-  }, []);
+    if (!isUnlocked) return;
+    ensureAnonSession().then(() => syncAllFiles());
+    return registerVisibilitySync();
+  }, [isUnlocked]);
 
   async function ensureAnonSession() {
     const { data: { session } } = await supabase.auth.getSession();

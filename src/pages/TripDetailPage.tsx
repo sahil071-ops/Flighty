@@ -164,8 +164,6 @@ export function TripDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const docFileRef = useRef<HTMLInputElement>(null);
 
-  const isAdmin = currentMember?.isAdmin ?? false;
-
   useEffect(() => { if (tripId) load(); }, [tripId, isOnline]);
 
   async function load() {
@@ -353,7 +351,7 @@ export function TripDetailPage() {
         {/* ── Flights ── */}
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Flights</h2>
-          {isAdmin && isOnline && (
+          {isOnline && (
             <Link to={`/trips/${trip.id}/flights/add`} className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -379,7 +377,7 @@ export function TripDetailPage() {
         {/* ── Hotels ── */}
         <div className="flex items-center justify-between mt-2">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Hotels</h2>
-          {isAdmin && isOnline && (
+          {isOnline && (
             <Link to={`/trips/${trip.id}/hotels/add`} className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -411,7 +409,7 @@ export function TripDetailPage() {
             <p className="text-sm text-slate-500 px-4 py-3">No documents uploaded yet.</p>
           )}
 
-          {isAdmin && isOnline && (
+          {isOnline && (
             <div className="border-t border-slate-700 p-4 flex flex-col gap-3">
               <p className="text-xs font-medium text-slate-400">Upload a document (visa, insurance, etc.)</p>
 
@@ -429,7 +427,7 @@ export function TripDetailPage() {
                   value={docMember} onChange={e => setDocMember(e.target.value)}
                 >
                   <option value="">All members</option>
-                  {FAMILY_MEMBERS.filter(m => !m.isAdmin).map(m => (
+                  {FAMILY_MEMBERS.filter(m => m.id !== 'admin').map(m => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
                 </select>
@@ -493,7 +491,7 @@ export function TripDetailPage() {
             </Button>
           )}
 
-          {isAdmin && isOnline && (
+          {isOnline && (
             <Button variant="danger" className="w-full" onClick={handleDeleteTrip} loading={deleting}>
               Delete trip
             </Button>

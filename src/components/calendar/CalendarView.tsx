@@ -7,7 +7,7 @@ import type { Flight } from '@/types';
 
 const MUMBAI_TZ = 'Asia/Kolkata';
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DISPLAY_MEMBERS = FAMILY_MEMBERS.filter(m => !m.isAdmin);
+const DISPLAY_MEMBERS = FAMILY_MEMBERS.filter(m => m.id !== 'admin');
 
 /** Returns YYYY-MM-DD in Mumbai (IST) timezone */
 function getISTDate(utcStr: string): string {

@@ -141,8 +141,6 @@ export function FlightDetailPage() {
   }
 
   const member = flight ? getMember(flight.family_member_id) : undefined;
-  const isAdmin = currentMember?.isAdmin ?? false;
-  const canEdit = isAdmin || (flight && flight.family_member_id === currentMember?.id);
 
   if (loading) {
     return (
@@ -291,7 +289,7 @@ export function FlightDetailPage() {
             Share via WhatsApp
           </Button>
 
-          {canEdit && isOnline && (
+          {isOnline && (
             <>
               <Link
                 to={`/flights/${flight.id}/edit`}
@@ -302,8 +300,7 @@ export function FlightDetailPage() {
                 </svg>
                 Edit flight
               </Link>
-              {isAdmin && (
-                <Button
+              <Button
                   variant="danger"
                   className="w-full"
                   onClick={handleDelete}
@@ -311,7 +308,6 @@ export function FlightDetailPage() {
                 >
                   Delete flight
                 </Button>
-              )}
             </>
           )}
         </div>

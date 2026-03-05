@@ -14,19 +14,6 @@ export function AddHotelPage() {
   const { currentMember } = useApp();
   const { isOnline } = useOffline();
 
-  const isAdmin = currentMember?.isAdmin ?? false;
-
-  if (!isAdmin) {
-    return (
-      <Layout title="Add hotel" hideNav>
-        <div className="px-4 py-8 text-center">
-          <p className="text-slate-400">Only Admin can add hotels.</p>
-          <Button variant="ghost" className="mt-4" onClick={() => navigate(-1)}>Go back</Button>
-        </div>
-      </Layout>
-    );
-  }
-
   if (!isOnline) {
     return (
       <Layout title="Add hotel" hideNav>
@@ -75,9 +62,8 @@ export function AddHotelPage() {
     >
       <div className="px-4 py-4">
         <HotelForm
-          members={FAMILY_MEMBERS.filter(m => !m.isAdmin)}
-          currentUserId={currentMember?.id ?? 'admin'}
-          isAdmin={isAdmin}
+          members={FAMILY_MEMBERS.filter(m => m.id !== 'admin')}
+          currentUserId={currentMember?.id ?? ''}
           onSubmit={handleSubmit}
           submitLabel="Save hotel"
         />

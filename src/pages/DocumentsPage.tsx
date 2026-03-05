@@ -12,7 +12,7 @@ import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import type { MemberDocument } from '@/types';
 import { getExpiryStatus, daysUntilExpiry } from '@/types';
 
-const DISPLAY_MEMBERS = FAMILY_MEMBERS.filter(m => !m.isAdmin);
+const DISPLAY_MEMBERS = FAMILY_MEMBERS.filter(m => m.id !== 'admin');
 
 function ExpiryAlertCard({ doc }: { doc: MemberDocument }) {
   const navigate = useNavigate();
@@ -66,8 +66,6 @@ export function DocumentsPage() {
   const [allDocs, setAllDocs] = useState<MemberDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const isAdmin = currentMember?.isAdmin ?? false;
-
   useEffect(() => {
     load();
   }, [isOnline]);
@@ -115,7 +113,7 @@ export function DocumentsPage() {
             </svg>
             <h1 className="text-lg font-semibold text-white">Documents</h1>
           </div>
-          {isAdmin && isOnline && (
+          {isOnline && (
             <button
               onClick={() => navigate('/documents/add')}
               className="w-8 h-8 bg-sky-500 rounded-full flex items-center justify-center text-white hover:bg-sky-400 transition-colors"
