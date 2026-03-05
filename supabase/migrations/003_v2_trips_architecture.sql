@@ -114,48 +114,39 @@ alter table trip_documents enable row level security;
 create policy "allow_all_trip_documents" on trip_documents for all using (true) with check (true);
 
 -- ============================================================
--- 6. Storage bucket policies
---    Assumes buckets 'tickets', 'vouchers', 'documents' exist.
---    Create them in Storage → New bucket if they don't exist yet.
+-- 6. Storage buckets + policies
 -- ============================================================
 
--- tickets bucket (flight ticket PDFs / images)
-do $$
-begin
-  if not exists (
-    select 1 from storage.policies where bucket_id = 'tickets' and name = 'tickets_all'
-  ) then
-    insert into storage.policies (bucket_id, name, definition)
-    values ('tickets', 'tickets_all', '{"operation":"ALL","check":"true","using":"true"}');
-  end if;
-end $$;
-
--- vouchers bucket (hotel vouchers)
+-- Ensure all three buckets exist
 insert into storage.buckets (id, name, public)
-  values ('vouchers', 'vouchers', false)
+  values ('tickets',   'tickets',   false)
   on conflict (id) do nothing;
 
-do $$
-begin
-  if not exists (
-    select 1 from storage.policies where bucket_id = 'vouchers' and name = 'vouchers_all'
-  ) then
-    insert into storage.policies (bucket_id, name, definition)
-    values ('vouchers', 'vouchers_all', '{"operation":"ALL","check":"true","using":"true"}');
-  end if;
-end $$;
+insert into storage.buckets (id, name, public)
+  values ('vouchers',  'vouchers',  false)
+  on conflict (id) do nothing;
 
--- documents bucket (visa, insurance etc.)
 insert into storage.buckets (id, name, public)
   values ('documents', 'documents', false)
   on conflict (id) do nothing;
 
-do $$
-begin
-  if not exists (
-    select 1 from storage.policies where bucket_id = 'documents' and name = 'documents_all'
-  ) then
-    insert into storage.policies (bucket_id, name, definition)
-    values ('documents', 'documents_all', '{"operation":"ALL","check":"true","using":"true"}');
-  end if;
-end $$;
+-- Storage RLS policies on storage.objects
+-- Drop first so this script is safe to re-run
+drop policy if exists "tickets_all"   on storage.objects;
+drop policy if exists "vouchers_all"  on storage.objects;
+drop policy if exists "documents_all" on storage.objects;
+
+create policy "tickets_all"
+  on storage.objects for all
+  using  (bucket_id = 'tickets')
+  with check (bucket_id = 'tickets');
+
+create policy "vouchers_all"
+  on storage.objects for all
+  using  (bucket_id = 'vouchers')
+  with check (bucket_id = 'vouchers');
+
+create policy "documents_all"
+  on storage.objects for all
+  using  (bucket_id = 'documents')
+  with check (bucket_id = 'documents');
