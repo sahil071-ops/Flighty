@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp, FAMILY_MEMBERS } from '@/context/AppContext';
 import { Avatar } from '@/components/ui/Avatar';
 import { CalendarView } from '@/components/calendar/CalendarView';
+import { ThisWeekBanner } from '@/components/trips/ThisWeekBanner';
 
 type Tab = 'members' | 'calendar';
 
@@ -64,19 +65,22 @@ export function HomePage() {
 
       <main className="flex-1 px-4 py-6">
         {tab === 'members' && (
-          <div>
-            <p className="text-sm text-slate-400 mb-5 text-center">Who are you?</p>
-            <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-              {FAMILY_MEMBERS.map(member => (
-                <button
-                  key={member.id}
-                  onClick={() => selectMember(member)}
-                  className="flex flex-col items-center gap-3 bg-slate-800 rounded-2xl p-5 active:scale-95 transition-all border border-slate-700 hover:border-slate-500"
-                >
-                  <Avatar name={member.name} colour={member.colour} size="lg" />
-                  <span className="text-sm font-medium text-white">{member.name}</span>
-                </button>
-              ))}
+          <div className="flex flex-col gap-5">
+            <ThisWeekBanner />
+            <div>
+              <p className="text-sm text-slate-400 mb-5 text-center">Who are you?</p>
+              <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+                {FAMILY_MEMBERS.map(member => (
+                  <button
+                    key={member.id}
+                    onClick={() => selectMember(member)}
+                    className="flex flex-col items-center gap-3 bg-slate-800 rounded-2xl p-5 active:scale-95 transition-all border border-slate-700 hover:border-slate-500"
+                  >
+                    <Avatar name={member.name} colour={member.colour} size="lg" />
+                    <span className="text-sm font-medium text-white">{member.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

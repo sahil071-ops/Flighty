@@ -46,7 +46,7 @@ export function EditFlightPage() {
 
     const { error } = await supabase
       .from('flights')
-      .update({ ...flightData, updated_at: new Date().toISOString() })
+      .update({ ...flightData })
       .eq('id', flight.id);
 
     if (error) throw error;
@@ -69,7 +69,6 @@ export function EditFlightPage() {
     const { date: arrDate, time: arrTime } = utcToLocal(f.arrival_datetime_utc, f.arrival_timezone);
     return {
       family_member_id: f.family_member_id,
-      trip_name: f.trip_name ?? '',
       flight_number: f.flight_number,
       airline: f.airline ?? '',
       departure_airport_code: f.departure_airport_code,
@@ -88,7 +87,6 @@ export function EditFlightPage() {
       seat: f.seat ?? '',
       booking_reference: f.booking_reference ?? '',
       price: f.price ?? '',
-      notes: f.notes ?? '',
     };
   }
 

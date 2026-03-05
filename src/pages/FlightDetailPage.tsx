@@ -180,7 +180,7 @@ export function FlightDetailPage() {
       title={`${flight.flight_number}`}
       hideNav
       headerRight={
-        <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white p-2 -mr-2">
+        <button onClick={() => flight.trip_id ? navigate(`/trips/${flight.trip_id}`) : navigate(-1)} className="text-slate-400 hover:text-white p-2 -mr-2">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -194,7 +194,6 @@ export function FlightDetailPage() {
             <Avatar name={member.name} colour={member.colour} size="md" />
             <div>
               <div className="text-sm font-medium text-white">{member.name}</div>
-              {flight.trip_name && <div className="text-xs text-slate-500">{flight.trip_name}</div>}
             </div>
           </div>
         )}
@@ -236,7 +235,6 @@ export function FlightDetailPage() {
           <DetailRow label="Seat" value={flight.seat} />
           <DetailRow label="Booking reference" value={flight.booking_reference} />
           <DetailRow label="Price" value={flight.price} />
-          <DetailRow label="Notes" value={flight.notes} />
         </div>
 
         {/* Ticket PDF */}
