@@ -1,10 +1,18 @@
 /**
  * Background file sync — downloads all files to Cache API silently.
- * Runs on app open and when the tab regains focus.
+ * Background data sync — writes all Supabase data to IndexedDB.
+ * Both run on app open and when the tab regains focus.
  * Never blocks the UI; shows a small indicator via listeners.
  */
 import { supabase } from './supabase';
 import { isFileCached, cacheFile } from './fileCache';
+import {
+  cacheTrips,
+  cacheFlights,
+  cacheHotels,
+  cacheTripDocuments,
+  cacheMemberDocuments,
+} from './db';
 
 // ── Sync status observable ─────────────────────────────────────────────────────
 
@@ -26,7 +34,34 @@ function setStatus(s: SyncStatus) {
   _listeners.forEach(fn => fn(s));
 }
 
-// ── Background sync ────────────────────────────────────────────────────────────
+// ── Data sync (IndexedDB) ──────────────────────────────────────────────────────
+
+/**
+ * Fetches all data from Supabase and writes it to IndexedDB for offline access.
+ * Called on every app unlock and tab focus. Silent on failure.
+ */
+export async function syncAllData(): Promise<void> {
+  try {
+    const [tripsRes, flightsRes, hotelsRes, tripDocsRes, memberDocsRes] = await Promise.all([
+      supabase.from('trips').select('*'),
+      supabase.from('flights').select('*'),
+      supabase.from('hotels').select('*'),
+      supabase.from('trip_documents').select('*'),
+      supabase.from('member_documents').select('*'),
+    ]);
+    await Promise.all([
+      cacheTrips(tripsRes.data ?? []),
+      cacheFlights(flightsRes.data ?? []),
+      cacheHotels(hotelsRes.data ?? []),
+      cacheTripDocuments(tripDocsRes.data ?? []),
+      cacheMemberDocuments(memberDocsRes.data ?? []),
+    ]);
+  } catch {
+    // Silent failure — offline or Supabase unavailable
+  }
+}
+
+// ── File sync (Cache API) ──────────────────────────────────────────────────────
 
 export async function syncAllFiles(): Promise<void> {
   if (_running) return; // prevent concurrent runs
@@ -96,6 +131,7 @@ export async function syncAllFiles(): Promise<void> {
 export function registerVisibilitySync(): () => void {
   const handler = () => {
     if (document.visibilityState === 'visible') {
+      syncAllData();
       syncAllFiles();
     }
   };

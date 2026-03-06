@@ -3,7 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
-import { getCachedTrip, getCachedFlights, getCachedHotels, getCachedTripDocuments } from '@/lib/db';
+import {
+  getCachedTrip, getCachedFlights, getCachedHotels, getCachedTripDocuments,
+  cacheTrips, cacheFlights, cacheHotels, cacheTripDocuments,
+} from '@/lib/db';
 import { getMember, FAMILY_MEMBERS } from '@/data/members';
 import { Layout } from '@/components/layout/Layout';
 import { Avatar } from '@/components/ui/Avatar';
@@ -181,6 +184,13 @@ export function TripDetailPage() {
         setFlights(flightsRes.data ?? []);
         setHotels(hotelsRes.data ?? []);
         setDocs(docsRes.data ?? []);
+        // Write to IndexedDB for offline access
+        const writes: Promise<void>[] = [];
+        if (tripRes.data) writes.push(cacheTrips([tripRes.data]));
+        if (flightsRes.data?.length) writes.push(cacheFlights(flightsRes.data));
+        if (hotelsRes.data?.length) writes.push(cacheHotels(hotelsRes.data));
+        if (docsRes.data?.length) writes.push(cacheTripDocuments(docsRes.data));
+        Promise.all(writes).catch(() => { /* non-critical */ });
       } else {
         const [cachedTrip, cachedFlights, cachedHotels, cachedDocs] = await Promise.all([
           getCachedTrip(tripId!),
@@ -303,7 +313,11 @@ export function TripDetailPage() {
     return (
       <Layout title="Trip not found" hideNav>
         <div className="text-center py-16 px-4">
-          <p className="text-slate-400">This trip could not be found.</p>
+          <p className="text-slate-400">
+            {isOnline
+              ? 'This trip could not be found.'
+              : "You're offline and this trip hasn't been cached yet. Open it while online first."}
+          </p>
           <button onClick={() => navigate(-1)} className="text-sky-400 text-sm mt-4">Go back</button>
         </div>
       </Layout>
@@ -458,11 +472,15 @@ export function TripDetailPage() {
                 />
               </button>
 
-              {docFile && docLabel.trim() && (
-                <Button onClick={uploadDocument} loading={docUploading} size="sm" className="w-full">
-                  Upload document
-                </Button>
-              )}
+              <Button
+                onClick={uploadDocument}
+                loading={docUploading}
+                size="sm"
+                className="w-full"
+                disabled={!docFile || !docLabel.trim()}
+              >
+                Upload document
+              </Button>
             </div>
           )}
         </div>

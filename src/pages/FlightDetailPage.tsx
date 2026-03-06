@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
-import { getCachedFlight, deleteCachedFlight } from '@/lib/db';
+import { getCachedFlight, deleteCachedFlight, cacheFlights } from '@/lib/db';
 import { getMember } from '@/data/members';
 import { Layout } from '@/components/layout/Layout';
 import { Avatar } from '@/components/ui/Avatar';
@@ -56,6 +56,7 @@ export function FlightDetailPage() {
           .maybeSingle();
         if (error) throw error;
         setFlight(data);
+        if (data) cacheFlights([data]).catch(() => { /* non-critical */ });
       } else {
         const f = await getCachedFlight(id!);
         setFlight(f ?? null);
@@ -156,7 +157,11 @@ export function FlightDetailPage() {
     return (
       <Layout title="Flight not found" hideNav>
         <div className="text-center py-16 px-4">
-          <p className="text-slate-400">This flight could not be found.</p>
+          <p className="text-slate-400">
+            {isOnline
+              ? 'This flight could not be found.'
+              : "You're offline and this flight hasn't been cached yet. Open it while online first."}
+          </p>
           <button onClick={() => navigate(-1)} className="text-sky-400 text-sm mt-4">
             Go back
           </button>

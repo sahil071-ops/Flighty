@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
-import { getCachedTrips, getCachedFlights, getCachedHotels } from '@/lib/db';
+import { getCachedTrips, getCachedFlights, getCachedHotels, cacheTrips, cacheFlights, cacheHotels } from '@/lib/db';
 import { getMember } from '@/data/members';
 import { Avatar } from '@/components/ui/Avatar';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -62,6 +62,12 @@ export function MyFlightsPage() {
             hMap.set(h.trip_id, arr);
           }
           setHotelsByTrip(hMap);
+
+          // Cache for offline access
+          const writes: Promise<void>[] = [cacheTrips(loadedTrips)];
+          if (flightsData?.length) writes.push(cacheFlights(flightsData));
+          if (hotelsData?.length) writes.push(cacheHotels(hotelsData));
+          Promise.all(writes).catch(() => { /* non-critical */ });
         } else {
           setFlightsByTrip(new Map());
           setHotelsByTrip(new Map());
