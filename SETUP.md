@@ -4,6 +4,14 @@ This guide walks you through deploying FamilyFlights for your family. No technic
 
 ---
 
+## Keeping the App Up to Date
+
+When a new version of the app is deployed, a banner will appear at the bottom of the screen the next time you open the app. Tap **"Update now"** to reload with the latest version instantly.
+
+If you ever see the app behaving strangely, close it fully (swipe it away from your app switcher) and reopen it. This clears any temporary state and loads fresh.
+
+---
+
 ## What You'll Need
 
 - A computer with a web browser (Chrome or Firefox recommended)

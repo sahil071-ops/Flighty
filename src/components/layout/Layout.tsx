@@ -15,14 +15,20 @@ export function Layout({ children, title, headerRight, hideNav = false }: Layout
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
       <OfflineBanner />
       {title && (
-        <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+        <header
+          className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
           <div className="flex items-center justify-between px-4 h-14">
             <h1 className="text-lg font-semibold text-white">{title}</h1>
             {headerRight && <div>{headerRight}</div>}
           </div>
         </header>
       )}
-      <main className={`flex-1 overflow-y-auto ${hideNav ? '' : 'pb-20'}`}>
+      <main
+        className="flex-1 overflow-y-auto"
+        style={hideNav ? {} : { paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+      >
         {children}
       </main>
       <SyncIndicator />
