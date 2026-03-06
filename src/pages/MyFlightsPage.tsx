@@ -114,11 +114,14 @@ export function MyFlightsPage() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
-      <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+      <header
+        className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="flex items-center gap-3 px-4 h-14">
           <button
             onClick={() => navigate('/')}
-            className="text-slate-400 hover:text-white p-2 -ml-2"
+            className="text-slate-400 hover:text-white p-3 -ml-3 flex items-center justify-center"
             aria-label="Back"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from '@/context/AppContext';
 import { OfflineProvider } from '@/context/OfflineContext';
+import { UpdatePrompt } from '@/components/ui/UpdatePrompt';
 
 import { PasswordPage } from '@/pages/PasswordPage';
 import { HomePage } from '@/pages/HomePage';
@@ -15,6 +16,7 @@ import { DocumentsPage } from '@/pages/DocumentsPage';
 import { MemberDocumentsPage } from '@/pages/MemberDocumentsPage';
 import { AddDocumentPage } from '@/pages/AddDocumentPage';
 import { DocumentDetailPage } from '@/pages/DocumentDetailPage';
+import { WhatsNewPage } from '@/pages/WhatsNewPage';
 
 function AppRoutes() {
   const { isUnlocked } = useApp();
@@ -45,6 +47,9 @@ function AppRoutes() {
       <Route path="/documents/add" element={<AddDocumentPage />} />
       <Route path="/documents/view/:docId" element={<DocumentDetailPage />} />
 
+      {/* Version history */}
+      <Route path="/whats-new" element={<WhatsNewPage />} />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -56,6 +61,7 @@ export default function App() {
       <OfflineProvider>
         <AppProvider>
           <AppRoutes />
+          <UpdatePrompt />
         </AppProvider>
       </OfflineProvider>
     </BrowserRouter>

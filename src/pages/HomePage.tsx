@@ -8,6 +8,7 @@ import { ExpiryWarningBanner } from '@/components/documents/ExpiryWarningBanner'
 import { BottomNav } from '@/components/layout/BottomNav';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { SyncIndicator } from '@/components/ui/SyncIndicator';
+import { VERSION } from '@/version';
 
 type Tab = 'members' | 'calendar';
 
@@ -24,7 +25,10 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
       <OfflineBanner />
-      <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+      <header
+        className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
             <svg className="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="currentColor">
@@ -68,7 +72,7 @@ export function HomePage() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-6 pb-24">
+      <main className="flex-1 px-4 py-6" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
         {tab === 'members' && (
           <div className="flex flex-col gap-4">
             <ThisWeekBanner />
@@ -88,6 +92,14 @@ export function HomePage() {
                 ))}
               </div>
             </div>
+            <button
+              onClick={() => navigate('/whats-new')}
+              className="text-center mt-2"
+            >
+              <span className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
+                FamilyFlights v{VERSION}
+              </span>
+            </button>
           </div>
         )}
 

@@ -180,7 +180,7 @@ export function AddDocumentPage() {
       title="Add Document"
       hideNav
       headerRight={
-        <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white p-2 -mr-2">
+        <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white p-3 -mr-3 flex items-center justify-center">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
