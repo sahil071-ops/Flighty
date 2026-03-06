@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
-import { getCachedFlights } from '@/lib/db';
+import { getCachedFlights, cacheFlights } from '@/lib/db';
 import { FAMILY_MEMBERS } from '@/data/members';
 import type { Flight } from '@/types';
 
@@ -99,6 +99,7 @@ export function CalendarView() {
       if (isOnline) {
         const { data } = await supabase.from('flights').select('*');
         setFlights(data ?? []);
+        if (data?.length) cacheFlights(data).catch(() => { /* non-critical */ });
       } else {
         const cached = await getCachedFlights();
         setFlights(cached);

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { FAMILY_MEMBERS, getMember, type Member } from '@/data/members';
-import { syncAllFiles, registerVisibilitySync } from '@/lib/backgroundSync';
+import { syncAllData, syncAllFiles, registerVisibilitySync } from '@/lib/backgroundSync';
 
 const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD as string | undefined ?? 'Axis@149';
 const UNLOCK_KEY = 'ff_unlocked';
@@ -26,10 +26,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return id ? (getMember(id) ?? null) : null;
   });
 
-  // On load: ensure anonymous session, then kick off background file sync.
+  // On load: ensure anonymous session, then kick off background data + file sync.
   useEffect(() => {
     if (!isUnlocked) return;
-    ensureAnonSession().then(() => syncAllFiles());
+    ensureAnonSession().then(() => {
+      syncAllData();  // write all data to IndexedDB for offline access
+      syncAllFiles(); // cache all files to Cache API
+    });
     return registerVisibilitySync();
   }, [isUnlocked]);
 

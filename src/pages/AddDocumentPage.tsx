@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp, FAMILY_MEMBERS } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
+import { cacheMemberDocuments } from '@/lib/db';
 import { FAMILY_MEMBERS as FM } from '@/data/members';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -135,6 +136,9 @@ export function AddDocumentPage() {
 
     setSaving(true);
     setSaveError(null);
+
+    // Step 1: Primary insert — only this failure shows an error to the user
+    let inserted: { id: string } | null = null;
     try {
       const payload: Record<string, unknown> = {
         family_member_id: selectedMemberId,
@@ -142,37 +146,53 @@ export function AddDocumentPage() {
         ...form,
         label,
       };
-
-      const { data: inserted, error } = await supabase
+      const { data, error } = await supabase
         .from('member_documents')
         .insert(payload)
         .select()
         .single();
       if (error) throw error;
+      inserted = data;
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save document.');
+      setSaving(false);
+      return;
+    }
 
-      // Upload file if attached
-      if (file && inserted) {
+    // Step 2: Secondary operations — failures here are silently logged, save already succeeded
+    if (file && inserted) {
+      try {
         const ext = file.type === 'application/pdf' ? 'pdf' : (file.type.split('/')[1] || 'jpg');
         const path = `${selectedMemberId}/${inserted.id}.${ext}`;
         const { error: uploadErr } = await supabase.storage
           .from('member-documents')
           .upload(path, file, { contentType: file.type, upsert: true });
-
         if (!uploadErr) {
           await supabase
             .from('member_documents')
             .update({ file_url: path, file_type: ext === 'pdf' ? 'pdf' : 'image' })
             .eq('id', inserted.id);
         }
+      } catch (err) {
+        console.warn('File upload failed after document save:', err);
       }
-
-      invalidateExpiryCache();
-      navigate(`/documents/member/${selectedMemberId}`);
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save document.');
-    } finally {
-      setSaving(false);
     }
+
+    // Cache the saved document for offline access
+    try {
+      const { data: saved } = await supabase
+        .from('member_documents')
+        .select('*')
+        .eq('id', inserted!.id)
+        .single();
+      if (saved) await cacheMemberDocuments([saved]);
+    } catch {
+      // Non-critical
+    }
+
+    invalidateExpiryCache();
+    setSaving(false);
+    navigate(`/documents/member/${selectedMemberId}`);
   }
 
   return (

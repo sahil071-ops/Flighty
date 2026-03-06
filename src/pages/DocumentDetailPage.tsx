@@ -148,7 +148,11 @@ export function DocumentDetailPage() {
     return (
       <Layout title="Not found" hideNav>
         <div className="text-center py-16 px-4">
-          <p className="text-slate-400">Document not found.</p>
+          <p className="text-slate-400">
+            {isOnline
+              ? 'Document not found.'
+              : "You're offline and this document hasn't been cached yet. Open it while online first."}
+          </p>
           <button onClick={() => navigate(-1)} className="text-sky-400 text-sm mt-4">Go back</button>
         </div>
       </Layout>
