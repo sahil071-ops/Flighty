@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { Hotel } from '@/types';
 import type { Member } from '@/data/members';
 import { Avatar } from '@/components/ui/Avatar';
@@ -26,7 +27,7 @@ export function HotelCard({ hotel, member, showMember = true }: HotelCardProps) 
   const location = [hotel.city, hotel.country].filter(Boolean).join(', ');
 
   return (
-    <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+    <Link to={`/hotels/${hotel.id}`} className="block bg-slate-800 rounded-xl overflow-hidden border border-slate-700 active:scale-[0.99] transition-transform">
       <div className="h-0.5" style={{ backgroundColor: colour }} />
       <div className="p-4">
         {showMember && member && (
@@ -67,10 +68,10 @@ export function HotelCard({ hotel, member, showMember = true }: HotelCardProps) 
         )}
         {hotel.voucher_url && (
           <span className="text-[10px] bg-sky-900/60 text-sky-400 px-1.5 py-0.5 rounded mt-2 inline-block">
-            Voucher
+            Voucher ↗
           </span>
         )}
       </div>
-    </div>
+    </Link>
   );
 }

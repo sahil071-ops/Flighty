@@ -20,6 +20,14 @@ import type { Trip, Flight, Hotel, TripDocument } from '@/types';
 
 // ── Layover block ──────────────────────────────────────────────────────────────
 
+/** Only show a layover block when flights are connected legs of the same trip. */
+function shouldShowLayover(prev: Flight, next: Flight): boolean {
+  if (prev.trip_id !== next.trip_id) return false;
+  if (prev.arrival_airport_code !== next.departure_airport_code) return false;
+  const gapMs = new Date(next.departure_datetime_utc).getTime() - new Date(prev.arrival_datetime_utc).getTime();
+  return gapMs > 0 && gapMs < 24 * 60 * 60 * 1000;
+}
+
 function LayoverBlock({ prev, next }: { prev: Flight; next: Flight }) {
   const durationStr = getDurationString(prev.arrival_datetime_utc, next.departure_datetime_utc);
   const city = prev.arrival_city ?? prev.arrival_airport_code;
@@ -28,10 +36,10 @@ function LayoverBlock({ prev, next }: { prev: Flight; next: Flight }) {
   const diffMins = diffMs / 60000;
 
   const isWarning = diffMins < 60;
-  const isOvernight = diffMins >= 8 * 60;
+  const isLong = diffMins >= 8 * 60;
 
   const colourClass = isWarning ? 'text-amber-400' : 'text-slate-500';
-  const label = isOvernight ? 'Overnight layover' : `${durationStr} layover`;
+  const label = isLong ? 'Long layover' : `${durationStr} layover`;
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-slate-800/60">
@@ -199,7 +207,9 @@ export function TripDetailPage() {
           getCachedTripDocuments(),
         ]);
         setTrip(cachedTrip ?? null);
-        setFlights(cachedFlights.filter(f => f.trip_id === tripId).sort((a, b) => a.leg_order - b.leg_order));
+        setFlights(cachedFlights.filter(f => f.trip_id === tripId).sort((a, b) =>
+          a.leg_order - b.leg_order || a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
+        ));
         setHotels(cachedHotels.filter(h => h.trip_id === tripId));
         setDocs(cachedDocs.filter(d => d.trip_id === tripId));
       }
@@ -382,7 +392,7 @@ export function TripDetailPage() {
             {flights.map((f, idx) => (
               <div key={f.id}>
                 <FlightCard flight={f} member={getMember(f.family_member_id)} showMember={members.length > 1} grouped />
-                {idx < flights.length - 1 && <LayoverBlock prev={f} next={flights[idx + 1]} />}
+                {idx < flights.length - 1 && shouldShowLayover(f, flights[idx + 1]) && <LayoverBlock prev={f} next={flights[idx + 1]} />}
               </div>
             ))}
           </div>
