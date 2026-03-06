@@ -34,13 +34,17 @@ interface FamilyFlightsDB extends DBSchema {
     key: string;
     value: { key: string; value: string | number };
   };
+  cached_files: {
+    key: string; // '{bucket}:{path}'
+    value: { key: string; cachedAt: string };
+  };
 }
 
 let db: IDBPDatabase<FamilyFlightsDB> | null = null;
 
 async function getDB(): Promise<IDBPDatabase<FamilyFlightsDB>> {
   if (db) return db;
-  db = await openDB<FamilyFlightsDB>('family-flights', 4, {
+  db = await openDB<FamilyFlightsDB>('family-flights', 5, {
     upgrade(database, oldVersion) {
       if (oldVersion < 1) {
         const flightStore = database.createObjectStore('flights', { keyPath: 'id' });
@@ -77,7 +81,6 @@ async function getDB(): Promise<IDBPDatabase<FamilyFlightsDB>> {
         if (database.objectStoreNames.contains('flights')) {
           try {
             const raw = database as unknown as IDBDatabase;
-            // Access upgrade transaction via the db's transaction list
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const store = (raw as any).transaction.objectStore('flights');
             if (!store.indexNames.contains('by-trip')) {
@@ -86,6 +89,11 @@ async function getDB(): Promise<IDBPDatabase<FamilyFlightsDB>> {
           } catch {
             // Will be fine — the index just won't exist in offline flight-by-trip lookups
           }
+        }
+      }
+      if (oldVersion < 5) {
+        if (!database.objectStoreNames.contains('cached_files')) {
+          database.createObjectStore('cached_files', { keyPath: 'key' });
         }
       }
     },
@@ -198,6 +206,43 @@ export async function deleteCachedMemberDocument(id: string): Promise<void> {
   await database.delete('member_documents', id);
 }
 
+// ── File cache manifest ─────────────────────────────────────────────────────────
+// Tracks which files have been downloaded to the Cache API.
+// Key format: '{bucket}:{path}'
+
+export function fileCacheManifestKey(bucket: string, path: string): string {
+  return `${bucket}:${path}`;
+}
+
+export async function markFileCached(bucket: string, path: string): Promise<void> {
+  try {
+    const database = await getDB();
+    const key = fileCacheManifestKey(bucket, path);
+    await database.put('cached_files', { key, cachedAt: new Date().toISOString() });
+  } catch {
+    // Non-critical — manifest is a hint, not ground truth
+  }
+}
+
+export async function isFileManifested(bucket: string, path: string): Promise<boolean> {
+  try {
+    const database = await getDB();
+    return !!(await database.get('cached_files', fileCacheManifestKey(bucket, path)));
+  } catch {
+    return false;
+  }
+}
+
+export async function getAllManifestedKeys(): Promise<string[]> {
+  try {
+    const database = await getDB();
+    const all = await database.getAll('cached_files');
+    return all.map(r => r.key);
+  } catch {
+    return [];
+  }
+}
+
 // ── Clear all ──────────────────────────────────────────────────────────────────
 
 export async function clearAllCache(): Promise<void> {
@@ -209,5 +254,6 @@ export async function clearAllCache(): Promise<void> {
     database.clear('hotels'),
     database.clear('trip_documents'),
     database.clear('meta'),
+    database.clear('cached_files'),
   ]);
 }

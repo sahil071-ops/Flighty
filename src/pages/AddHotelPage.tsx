@@ -37,10 +37,14 @@ export function AddHotelPage() {
     if (voucherFile && inserted) {
       const ext = voucherFile.name.split('.').pop() ?? 'jpg';
       const path = `vouchers/${tripId}/${inserted.id}.${ext}`;
+      console.log('[HotelVoucher] Uploading to vouchers bucket:', path, 'size:', voucherFile.size);
       const { error: uploadErr } = await supabase.storage
         .from('vouchers')
         .upload(path, voucherFile, { upsert: true });
-      if (!uploadErr) {
+      if (uploadErr) {
+        console.error('[HotelVoucher] Storage upload failed:', uploadErr.message, uploadErr);
+      } else {
+        console.log('[HotelVoucher] File uploaded, updating hotel record with voucher_url');
         await supabase.from('hotels').update({ voucher_url: path }).eq('id', inserted.id);
       }
     }
