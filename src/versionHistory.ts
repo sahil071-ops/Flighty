@@ -6,6 +6,17 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '1.8.0',
+    date: 'March 2026',
+    changes: [
+      'Fixed Flights screen to show trips instead of a flat flight list',
+      'Each trip card shows the full route: BOM → LHR → FRA',
+      'Fixed document save error — now shows the actual error from Supabase',
+      'Fixed hotel voucher access and download',
+      'Rebuilt offline auto-download: files tracked in IndexedDB, green indicator turns on when synced',
+    ],
+  },
+  {
     version: '1.7.0',
     date: 'March 2026',
     changes: [

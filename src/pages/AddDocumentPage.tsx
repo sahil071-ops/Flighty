@@ -154,7 +154,9 @@ export function AddDocumentPage() {
       if (error) throw error;
       inserted = data;
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save document.');
+      const _msg = (err as { message?: string })?.message ?? String(err);
+      console.error('[DocSave] Supabase insert failed:', _msg, err);
+      setSaveError(_msg || 'Failed to save document.');
       setSaving(false);
       return;
     }
