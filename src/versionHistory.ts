@@ -6,6 +6,26 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '1.7.0',
+    date: 'March 2026',
+    changes: [
+      'Hotel vouchers now viewable and saveable for offline access',
+      'Fixed layover display — only shown between connected flight legs',
+      'File sync failures now logged to console for debugging',
+      'Sync Now button to force an offline data refresh',
+      'Debug logging for document file uploads (check console if visa upload fails)',
+    ],
+  },
+  {
+    version: '1.6.0',
+    date: 'March 2026',
+    changes: [
+      'Fixed offline mode — all data now correctly saved to device on app open',
+      'Fixed false "Failed to save" error when saving documents with a file attachment',
+      'Document upload button always visible inside trip (was hidden until label entered)',
+    ],
+  },
+  {
     version: '1.5.0',
     date: 'March 2026',
     changes: [

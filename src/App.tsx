@@ -17,6 +17,7 @@ import { MemberDocumentsPage } from '@/pages/MemberDocumentsPage';
 import { AddDocumentPage } from '@/pages/AddDocumentPage';
 import { DocumentDetailPage } from '@/pages/DocumentDetailPage';
 import { WhatsNewPage } from '@/pages/WhatsNewPage';
+import { HotelDetailPage } from '@/pages/HotelDetailPage';
 
 function AppRoutes() {
   const { isUnlocked } = useApp();
@@ -46,6 +47,9 @@ function AppRoutes() {
       <Route path="/documents/member/:memberId" element={<MemberDocumentsPage />} />
       <Route path="/documents/add" element={<AddDocumentPage />} />
       <Route path="/documents/view/:docId" element={<DocumentDetailPage />} />
+
+      {/* Hotels */}
+      <Route path="/hotels/:hotelId" element={<HotelDetailPage />} />
 
       {/* Version history */}
       <Route path="/whats-new" element={<WhatsNewPage />} />

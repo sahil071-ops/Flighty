@@ -155,6 +155,11 @@ export async function getCachedHotels(): Promise<Hotel[]> {
   return database.getAll('hotels');
 }
 
+export async function getCachedHotel(id: string): Promise<Hotel | undefined> {
+  const database = await getDB();
+  return database.get('hotels', id);
+}
+
 // ── Trip Documents ─────────────────────────────────────────────────────────────
 
 export async function cacheTripDocuments(docs: TripDocument[]): Promise<void> {

@@ -115,8 +115,8 @@ export async function syncAllFiles(): Promise<void> {
         if (!(await isFileCached(bucket, path))) {
           await cacheFile(bucket, path);
         }
-      } catch {
-        // Skip individual failures silently
+      } catch (err) {
+        console.warn('[FileSync] Failed to cache file:', bucket, path, err);
       }
     }
   } catch {

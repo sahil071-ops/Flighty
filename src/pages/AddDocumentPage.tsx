@@ -164,17 +164,26 @@ export function AddDocumentPage() {
       try {
         const ext = file.type === 'application/pdf' ? 'pdf' : (file.type.split('/')[1] || 'jpg');
         const path = `${selectedMemberId}/${inserted.id}.${ext}`;
+        console.log('[DocUpload] Uploading file to member-documents bucket:', path, 'size:', file.size, 'type:', file.type);
         const { error: uploadErr } = await supabase.storage
           .from('member-documents')
           .upload(path, file, { contentType: file.type, upsert: true });
-        if (!uploadErr) {
-          await supabase
+        if (uploadErr) {
+          console.error('[DocUpload] Storage upload failed:', uploadErr.message, uploadErr);
+        } else {
+          console.log('[DocUpload] File uploaded successfully, updating file_url on record');
+          const { error: updateErr } = await supabase
             .from('member_documents')
             .update({ file_url: path, file_type: ext === 'pdf' ? 'pdf' : 'image' })
             .eq('id', inserted.id);
+          if (updateErr) {
+            console.error('[DocUpload] Failed to update file_url on document record:', updateErr.message);
+          } else {
+            console.log('[DocUpload] Document record updated with file_url:', path);
+          }
         }
       } catch (err) {
-        console.warn('File upload failed after document save:', err);
+        console.error('[DocUpload] Unexpected error during file upload:', err);
       }
     }
 
