@@ -147,11 +147,46 @@ USING (
 );
 
 -- ── Table-level RLS policies ───────────────────────────────────────────────────
--- These are REQUIRED if RLS is enabled on these tables.
--- Run these if document saves are failing with "permission denied" errors.
 -- NOTE: All tables must be qualified with the 'public' schema.
 
--- member_documents table
+-- ── Create member_documents table (does not exist yet) ─────────────────────────
+-- Run this block FIRST if the table has never been created.
+
+CREATE TABLE IF NOT EXISTS public.member_documents (
+  id                        uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  family_member_id          text NOT NULL,
+  document_type             text NOT NULL CHECK (document_type IN ('passport', 'visa', 'travel_insurance', 'other')),
+  label                     text NOT NULL,
+  -- Passport fields
+  passport_number           text,
+  passport_country_of_issue text,
+  passport_nationality      text,
+  passport_expiry_date      date,
+  passport_dob              date,
+  -- Visa fields
+  visa_country              text,
+  visa_type                 text,
+  visa_entry_type           text,
+  visa_issue_date           date,
+  visa_expiry_date          date,
+  visa_duration_of_stay     text,
+  visa_issuing_country      text,
+  -- Travel insurance fields
+  insurance_provider        text,
+  insurance_policy_number   text,
+  insurance_start_date      date,
+  insurance_end_date        date,
+  insurance_coverage        text,
+  insurance_emergency_number text,
+  -- Unified
+  expiry_date               date,
+  notes                     text,
+  file_url                  text,
+  file_type                 text,
+  created_at                timestamptz NOT NULL DEFAULT now(),
+  updated_at                timestamptz NOT NULL DEFAULT now()
+);
+
 ALTER TABLE public.member_documents ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow anon select member_documents"
@@ -169,6 +204,8 @@ USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 CREATE POLICY "Allow anon delete member_documents"
 ON public.member_documents FOR DELETE
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
+
+-- ── RLS for existing tables ────────────────────────────────────────────────────
 
 -- trips table
 ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
