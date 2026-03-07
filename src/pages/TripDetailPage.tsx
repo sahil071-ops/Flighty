@@ -190,7 +190,7 @@ export function TripDetailPage() {
         ]);
         setTrip(tripRes.data);
         setFlights((flightsRes.data ?? []).sort((a, b) =>
-          a.leg_order - b.leg_order || a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
+          a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
         ));
         setHotels((hotelsRes.data ?? []).sort((a, b) => a.check_in_date.localeCompare(b.check_in_date)));
         setDocs(docsRes.data ?? []);
@@ -210,7 +210,7 @@ export function TripDetailPage() {
         ]);
         setTrip(cachedTrip ?? null);
         setFlights(cachedFlights.filter(f => f.trip_id === tripId).sort((a, b) =>
-          a.leg_order - b.leg_order || a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
+          a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
         ));
         setHotels(cachedHotels.filter(h => h.trip_id === tripId));
         setDocs(cachedDocs.filter(d => d.trip_id === tripId));

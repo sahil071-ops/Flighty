@@ -37,7 +37,7 @@ export function TripCard({ trip, flights, hotels }: TripCardProps) {
   const primaryColour = members[0]?.colour ?? '#64748b';
 
   const sortedFlights = [...flights].sort((a, b) =>
-    a.leg_order - b.leg_order || a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
+    a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
   );
 
   const legChain = buildLegChain(sortedFlights);
