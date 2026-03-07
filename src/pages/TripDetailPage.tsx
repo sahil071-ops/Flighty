@@ -4,10 +4,10 @@ import { useApp } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
 import {
-  getCachedTrip, getCachedFlights, getCachedHotels, getCachedTripDocuments,
-  cacheTrips, cacheFlights, cacheHotels, cacheTripDocuments,
+  getCachedTrip, getCachedFlights, getCachedHotels,
+  cacheTrips, cacheFlights, cacheHotels,
 } from '@/lib/db';
-import { getMember, FAMILY_MEMBERS } from '@/data/members';
+import { getMember } from '@/data/members';
 import { Layout } from '@/components/layout/Layout';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -16,7 +16,7 @@ import { FlightCard } from '@/components/flights/FlightCard';
 import { HotelCard } from '@/components/hotels/HotelCard';
 import { downloadICS } from '@/lib/icsGenerator';
 import { getDurationString, formatLocalTime, getTimezoneAbbr } from '@/lib/timezone';
-import type { Trip, Flight, Hotel, TripDocument } from '@/types';
+import type { Trip, Flight, Hotel, MemberDocument } from '@/types';
 
 // ── Layover block ──────────────────────────────────────────────────────────────
 
@@ -127,28 +127,53 @@ function NotesSection({ trip, canEdit, onSave }: {
   );
 }
 
-// ── Document upload row ────────────────────────────────────────────────────────
+// ── Linked document row ────────────────────────────────────────────────────────
 
-function DocumentRow({ doc }: { doc: TripDocument }) {
-  const member = doc.family_member_id ? getMember(doc.family_member_id) : null;
+const DOC_TYPE_LABEL: Record<string, string> = {
+  passport: 'Passport',
+  visa: 'Visa',
+  travel_insurance: 'Travel Insurance',
+  other: 'Other',
+};
+
+interface LinkedDoc { link_id: string; doc: MemberDocument }
+
+function LinkedDocRow({ linked, onUnlink, canEdit }: {
+  linked: LinkedDoc;
+  onUnlink: (linkId: string) => void;
+  canEdit: boolean;
+}) {
+  const { doc } = linked;
+  const member = getMember(doc.family_member_id);
+  const navigate = useNavigate();
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-slate-800 last:border-0">
+    <div
+      className="flex items-center gap-3 py-3 border-b border-slate-800 last:border-0 cursor-pointer"
+      onClick={() => navigate(`/documents/view/${doc.id}`)}
+    >
       <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
-        {doc.file_type === 'image' ? (
-          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-          </svg>
-        ) : (
-          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-          </svg>
-        )}
+        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+        </svg>
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-white truncate">{doc.label}</p>
-        <p className="text-xs text-slate-500">{doc.document_type}{member ? ` · ${member.name}` : ' · All'}</p>
+        <p className="text-xs text-slate-500">
+          {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
+          {member ? ` · ${member.name}` : ''}
+          {doc.expiry_date ? ` · exp ${new Date(doc.expiry_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+        </p>
       </div>
-      {doc.notes && <p className="text-xs text-slate-500 truncate max-w-[120px]">{doc.notes}</p>}
+      {canEdit && (
+        <button
+          onClick={e => { e.stopPropagation(); onUnlink(linked.link_id); }}
+          className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-red-400 flex-shrink-0"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
@@ -164,16 +189,14 @@ export function TripDetailPage() {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [flights, setFlights] = useState<Flight[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
-  const [docs, setDocs] = useState<TripDocument[]>([]);
+  const [linkedDocs, setLinkedDocs] = useState<LinkedDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [docFile, setDocFile] = useState<File | null>(null);
-  const [docType, setDocType] = useState('Visa');
-  const [docLabel, setDocLabel] = useState('');
-  const [docMember, setDocMember] = useState<string>('');
-  const [docUploading, setDocUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const docFileRef = useRef<HTMLInputElement>(null);
+  const [showLinkPicker, setShowLinkPicker] = useState(false);
+  const [pickerDocs, setPickerDocs] = useState<MemberDocument[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [linking, setLinking] = useState<string | null>(null);
 
   useEffect(() => { if (tripId) load(); }, [tripId, isOnline]);
 
@@ -182,38 +205,40 @@ export function TripDetailPage() {
     setError(null);
     try {
       if (isOnline) {
-        const [tripRes, flightsRes, hotelsRes, docsRes] = await Promise.all([
+        const [tripRes, flightsRes, hotelsRes, linksRes] = await Promise.all([
           supabase.from('trips').select('*').eq('id', tripId!).maybeSingle(),
-          supabase.from('flights').select('*').eq('trip_id', tripId!).order('leg_order'),
+          supabase.from('flights').select('*').eq('trip_id', tripId!),
           supabase.from('hotels').select('*').eq('trip_id', tripId!).order('check_in_date'),
-          supabase.from('trip_documents').select('*').eq('trip_id', tripId!).order('created_at'),
+          supabase.from('trip_document_links').select('id, member_documents(*)').eq('trip_id', tripId!),
         ]);
         setTrip(tripRes.data);
         setFlights((flightsRes.data ?? []).sort((a, b) =>
           a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
         ));
         setHotels((hotelsRes.data ?? []).sort((a, b) => a.check_in_date.localeCompare(b.check_in_date)));
-        setDocs(docsRes.data ?? []);
+        setLinkedDocs(
+          (linksRes.data ?? [])
+            .filter(r => r.member_documents)
+            .map(r => ({ link_id: r.id, doc: r.member_documents as unknown as MemberDocument }))
+        );
         // Write to IndexedDB for offline access
         const writes: Promise<void>[] = [];
         if (tripRes.data) writes.push(cacheTrips([tripRes.data]));
         if (flightsRes.data?.length) writes.push(cacheFlights(flightsRes.data));
         if (hotelsRes.data?.length) writes.push(cacheHotels(hotelsRes.data));
-        if (docsRes.data?.length) writes.push(cacheTripDocuments(docsRes.data));
         Promise.all(writes).catch(() => { /* non-critical */ });
       } else {
-        const [cachedTrip, cachedFlights, cachedHotels, cachedDocs] = await Promise.all([
+        const [cachedTrip, cachedFlights, cachedHotels] = await Promise.all([
           getCachedTrip(tripId!),
           getCachedFlights(),
           getCachedHotels(),
-          getCachedTripDocuments(),
         ]);
         setTrip(cachedTrip ?? null);
         setFlights(cachedFlights.filter(f => f.trip_id === tripId).sort((a, b) =>
           a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
         ));
         setHotels(cachedHotels.filter(h => h.trip_id === tripId));
-        setDocs(cachedDocs.filter(d => d.trip_id === tripId));
+        setLinkedDocs([]); // not cached offline
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load trip.');
@@ -234,48 +259,45 @@ export function TripDetailPage() {
     setTrip(t => t ? { ...t, notes, notes_last_edited_by: currentMember?.name ?? 'Someone', notes_last_edited_at: new Date().toISOString() } : t);
   }
 
-  async function uploadDocument() {
-    if (!docFile || !docLabel.trim() || !tripId) return;
-    setDocUploading(true);
+  async function openLinkPicker() {
+    if (!trip) return;
+    setPickerLoading(true);
+    setShowLinkPicker(true);
     try {
-      const ext = docFile.name.split('.').pop() ?? 'pdf';
-      const fileType = docFile.type.startsWith('image/') ? 'image' : 'pdf';
-      const docId = crypto.randomUUID();
-      const path = `documents/${tripId}/${docId}.${ext}`;
-
-      const { error: uploadErr } = await supabase.storage
-        .from('documents')
-        .upload(path, docFile, { upsert: true });
-      if (uploadErr) throw uploadErr;
-
-      const { error: insertErr } = await supabase.from('trip_documents').insert({
-        trip_id: tripId,
-        family_member_id: docMember || null,
-        document_type: docType,
-        label: docLabel.trim(),
-        file_url: path,
-        file_type: fileType,
-      });
-      if (insertErr) throw insertErr;
-
-      // Mirror Visas and Travel Insurance to the member's global Documents section
-      if (docMember && (docType === 'Visa' || docType === 'Travel Insurance')) {
-        const memberDocType = docType === 'Visa' ? 'visa' : 'travel_insurance';
-        await supabase.from('member_documents').insert({
-          family_member_id: docMember,
-          document_type: memberDocType,
-          label: docLabel.trim(),
-        });
-      }
-
-      setDocFile(null);
-      setDocLabel('');
-      setDocMember('');
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload document.');
+      const { data } = await supabase
+        .from('member_documents')
+        .select('*')
+        .in('family_member_id', trip.family_member_ids)
+        .order('family_member_id')
+        .order('document_type');
+      setPickerDocs(data ?? []);
     } finally {
-      setDocUploading(false);
+      setPickerLoading(false);
+    }
+  }
+
+  async function toggleLink(memberDocId: string) {
+    if (!tripId) return;
+    setLinking(memberDocId);
+    try {
+      const existing = linkedDocs.find(l => l.doc.id === memberDocId);
+      if (existing) {
+        await supabase.from('trip_document_links').delete().eq('id', existing.link_id);
+        setLinkedDocs(prev => prev.filter(l => l.link_id !== existing.link_id));
+      } else {
+        const { data, error: insertErr } = await supabase.from('trip_document_links')
+          .insert({ trip_id: tripId, member_document_id: memberDocId })
+          .select('id, member_documents(*)')
+          .single();
+        if (insertErr) throw insertErr;
+        if (data?.member_documents) {
+          setLinkedDocs(prev => [...prev, { link_id: data.id, doc: data.member_documents as unknown as MemberDocument }]);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update document link.');
+    } finally {
+      setLinking(null);
     }
   }
 
@@ -436,76 +458,96 @@ export function TripDetailPage() {
         {/* ── Documents ── */}
         <div className="flex items-center justify-between mt-2">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Documents</h2>
+          {isOnline && (
+            <button onClick={openLinkPicker} className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Link document
+            </button>
+          )}
         </div>
 
         <div className="bg-slate-800 rounded-xl border border-slate-700">
-          {docs.length > 0 ? (
-            <div className="px-4">{docs.map(d => <DocumentRow key={d.id} doc={d} />)}</div>
-          ) : (
-            <p className="text-sm text-slate-500 px-4 py-3">No documents uploaded yet.</p>
-          )}
-
-          {isOnline && (
-            <div className="border-t border-slate-700 p-4 flex flex-col gap-3">
-              <p className="text-xs font-medium text-slate-400">Upload a document (visa, insurance, etc.)</p>
-
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
-                  value={docType} onChange={e => setDocType(e.target.value)}
-                >
-                  {['Visa', 'Travel Insurance', 'Hotel Voucher', 'Other'].map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-                <select
-                  className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
-                  value={docMember} onChange={e => setDocMember(e.target.value)}
-                >
-                  <option value="">All members</option>
-                  {FAMILY_MEMBERS.filter(m => m.id !== 'admin').map(m => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <input
-                type="text"
-                placeholder="Label, e.g. 'Sahil UAE Visa'"
-                className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500 w-full"
-                value={docLabel} onChange={e => setDocLabel(e.target.value)}
-              />
-
-              <button
-                type="button"
-                onClick={() => docFileRef.current?.click()}
-                className="flex items-center gap-2 text-xs text-slate-400 hover:text-white border border-dashed border-slate-600 rounded-lg px-3 py-2 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
-                </svg>
-                {docFile ? docFile.name : 'Choose file (PDF or image)'}
-                <input
-                  ref={docFileRef}
-                  type="file"
-                  accept="application/pdf,image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={e => setDocFile(e.target.files?.[0] ?? null)}
+          {linkedDocs.length > 0 ? (
+            <div className="px-4">
+              {linkedDocs.map(l => (
+                <LinkedDocRow
+                  key={l.link_id}
+                  linked={l}
+                  canEdit={isOnline}
+                  onUnlink={async linkId => {
+                    await supabase.from('trip_document_links').delete().eq('id', linkId);
+                    setLinkedDocs(prev => prev.filter(d => d.link_id !== linkId));
+                  }}
                 />
-              </button>
-
-              <Button
-                onClick={uploadDocument}
-                loading={docUploading}
-                size="sm"
-                className="w-full"
-                disabled={!docFile || !docLabel.trim()}
-              >
-                Upload document
-              </Button>
+              ))}
             </div>
+          ) : (
+            <p className="text-sm text-slate-500 px-4 py-3">
+              {isOnline ? 'No documents linked. Tap "+ Link document" to attach documents from the Documents tab.' : 'No documents cached for offline.'}
+            </p>
           )}
         </div>
+
+        {/* ── Link document picker ── */}
+        {showLinkPicker && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowLinkPicker(false)}>
+            <div className="mt-auto bg-slate-900 rounded-t-2xl border-t border-slate-700 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+                <h3 className="text-sm font-semibold text-white">Link a document</h3>
+                <button onClick={() => setShowLinkPicker(false)} className="text-slate-400 hover:text-white">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1 px-4 py-3">
+                {pickerLoading ? (
+                  <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
+                ) : pickerDocs.length === 0 ? (
+                  <p className="text-sm text-slate-500 py-4 text-center">
+                    No documents found for this trip's members.{' '}
+                    <Link to="/documents/add" className="text-sky-400">Add one in the Documents tab.</Link>
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {pickerDocs.map(doc => {
+                      const member = getMember(doc.family_member_id);
+                      const isLinked = linkedDocs.some(l => l.doc.id === doc.id);
+                      const isLoading = linking === doc.id;
+                      return (
+                        <button
+                          key={doc.id}
+                          onClick={() => toggleLink(doc.id)}
+                          disabled={isLoading}
+                          className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-left transition-colors ${isLinked ? 'bg-sky-900/40 border border-sky-700/50' : 'bg-slate-800 border border-transparent hover:border-slate-600'}`}
+                        >
+                          <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border ${isLinked ? 'bg-sky-500 border-sky-500' : 'border-slate-600'}`}>
+                            {isLinked && (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-white truncate">{doc.label}</p>
+                            <p className="text-xs text-slate-400">
+                              {DOC_TYPE_LABEL[doc.document_type] ?? doc.document_type}
+                              {member ? ` · ${member.name}` : ''}
+                              {doc.expiry_date ? ` · exp ${new Date(doc.expiry_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                            </p>
+                          </div>
+                          {isLoading && <LoadingSpinner size="sm" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Notes ── */}
         <div className="mt-2">
