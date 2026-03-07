@@ -156,7 +156,10 @@ export function AddDocumentPage() {
     } catch (err) {
       const _msg = (err as { message?: string })?.message ?? String(err);
       console.error('[DocSave] Supabase insert failed:', _msg, err);
-      setSaveError(_msg || 'Failed to save document.');
+      const isNetworkError = /load failed|network|failed to fetch/i.test(_msg);
+      setSaveError(isNetworkError
+        ? 'Network error — check your connection and try again. Your form details are still here.'
+        : (_msg || 'Failed to save document.'));
       setSaving(false);
       return;
     }

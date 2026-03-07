@@ -6,6 +6,16 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '2.0.1',
+    date: 'March 2026',
+    changes: [
+      'Fixed flight order within trips — always sorted chronologically by departure time',
+      'Hotels also sort chronologically by check-in date',
+      'Visas and travel insurance uploaded inside a trip now automatically appear in the member\'s Documents section',
+      'Network error on document save now shows a clear retry message instead of raw browser error',
+    ],
+  },
+  {
     version: '2.0.0',
     date: 'March 2026',
     changes: [
