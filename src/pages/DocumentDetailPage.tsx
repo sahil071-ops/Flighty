@@ -218,6 +218,7 @@ export function DocumentDetailPage() {
             <Row label="Visa Type" value={doc.visa_type} />
             <Row label="Entry Type" value={doc.visa_entry_type} />
             <Row label="Issuing Country" value={doc.visa_issuing_country} />
+            <Row label="Visa Number" value={doc.visa_number} />
             <Row label="Duration of Stay" value={doc.visa_duration_of_stay} />
             <Row label="Issue Date" value={doc.visa_issue_date} />
             <Row label="Expiry Date" value={doc.visa_expiry_date} />
