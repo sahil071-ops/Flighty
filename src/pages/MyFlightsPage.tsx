@@ -41,19 +41,17 @@ export function MyFlightsPage() {
         const tripIds = loadedTrips.map(t => t.id);
 
         // Load flights and hotels for these trips, plus all flights for this member
-        const queries: Promise<unknown>[] = [
+        const [flightsRes, hotelsRes, memberFlightsRes] = await Promise.all([
           tripIds.length > 0
             ? supabase.from('flights').select('*').in('trip_id', tripIds)
-            : Promise.resolve({ data: [] }),
+            : Promise.resolve({ data: [] as Flight[] | null }),
           tripIds.length > 0
             ? supabase.from('hotels').select('*').in('trip_id', tripIds)
-            : Promise.resolve({ data: [] }),
+            : Promise.resolve({ data: [] as Hotel[] | null }),
           id
             ? supabase.from('flights').select('*').eq('family_member_id', id)
-            : Promise.resolve({ data: [] }),
-        ];
-
-        const [flightsRes, hotelsRes, memberFlightsRes] = await Promise.all(queries) as [
+            : Promise.resolve({ data: [] as Flight[] | null }),
+        ]) as [
           { data: Flight[] | null },
           { data: Hotel[] | null },
           { data: Flight[] | null },
