@@ -6,6 +6,16 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '2.0.4',
+    date: 'March 2026',
+    changes: [
+      'Documents on the trip page now link to existing documents from the Documents tab — no more broken inline upload',
+      'Tap "+ Link document" on any trip to attach any of that person\'s passports, visas, or insurance docs',
+      'Linked documents are tappable and open the full document detail view',
+      'Unlink a document with the × button; upload new documents from the Documents tab',
+    ],
+  },
+  {
     version: '2.0.3',
     date: 'March 2026',
     changes: [
