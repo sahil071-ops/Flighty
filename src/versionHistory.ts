@@ -6,6 +6,14 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '2.0.0',
+    date: 'March 2026',
+    changes: [
+      'Fixed Vercel build error — TypeScript type issue in Flights screen resolved',
+      'SQL setup script is now idempotent — safe to re-run without errors',
+    ],
+  },
+  {
     version: '1.8.0',
     date: 'March 2026',
     changes: [
