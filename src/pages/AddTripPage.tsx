@@ -20,7 +20,7 @@ export function AddTripPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>(
-    currentMember && currentMember.id !== 'admin' ? [currentMember.id] : []
+    currentMember ? [currentMember.id] : []
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +71,7 @@ export function AddTripPage() {
     }
   }
 
-  const displayMembers = FAMILY_MEMBERS.filter(m => m.id !== 'admin');
+  const displayMembers = FAMILY_MEMBERS;
 
   return (
     <Layout

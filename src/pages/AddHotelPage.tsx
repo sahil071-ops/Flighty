@@ -66,7 +66,7 @@ export function AddHotelPage() {
     >
       <div className="px-4 py-4">
         <HotelForm
-          members={FAMILY_MEMBERS.filter(m => m.id !== 'admin')}
+          members={FAMILY_MEMBERS}
           currentUserId={currentMember?.id ?? ''}
           onSubmit={handleSubmit}
           submitLabel="Save hotel"

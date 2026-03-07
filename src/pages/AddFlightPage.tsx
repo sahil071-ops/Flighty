@@ -22,7 +22,6 @@ function detectMemberId(passengerName: string | null | undefined): string | unde
   const haystack = normalise(passengerName);
   const words = haystack.split(/\s+/);
   return FAMILY_MEMBERS.find(m => {
-    if (m.id === 'admin') return false;
     const needle = normalise(m.name);
     return words.includes(needle) || haystack.includes(needle);
   })?.id;
@@ -166,7 +165,7 @@ export function AddFlightPage() {
             )}
             <FlightForm
               key={`leg-${currentLegIndex}`}
-              members={FAMILY_MEMBERS.filter(m => m.id !== 'admin')}
+              members={FAMILY_MEMBERS}
               currentUserId={detectedMemberId ?? currentMember?.id ?? ''}
               prefill={currentPrefill}
               attachedFileName={sourceFile?.name}
