@@ -149,54 +149,55 @@ USING (
 -- ── Table-level RLS policies ───────────────────────────────────────────────────
 -- These are REQUIRED if RLS is enabled on these tables.
 -- Run these if document saves are failing with "permission denied" errors.
+-- NOTE: All tables must be qualified with the 'public' schema.
 
 -- member_documents table
-ALTER TABLE member_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.member_documents ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow anon select member_documents"
-ON member_documents FOR SELECT
+ON public.member_documents FOR SELECT
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 CREATE POLICY "Allow anon insert member_documents"
-ON member_documents FOR INSERT
+ON public.member_documents FOR INSERT
 WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 CREATE POLICY "Allow anon update member_documents"
-ON member_documents FOR UPDATE
+ON public.member_documents FOR UPDATE
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 CREATE POLICY "Allow anon delete member_documents"
-ON member_documents FOR DELETE
+ON public.member_documents FOR DELETE
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 -- trips table
-ALTER TABLE trips ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow anon all trips"
-ON trips FOR ALL
+ON public.trips FOR ALL
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon')
 WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 -- flights table
-ALTER TABLE flights ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.flights ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow anon all flights"
-ON flights FOR ALL
+ON public.flights FOR ALL
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon')
 WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 -- hotels table
-ALTER TABLE hotels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hotels ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow anon all hotels"
-ON hotels FOR ALL
+ON public.hotels FOR ALL
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon')
 WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
 -- trip_documents table
-ALTER TABLE trip_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.trip_documents ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow anon all trip_documents"
-ON trip_documents FOR ALL
+ON public.trip_documents FOR ALL
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon')
 WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
