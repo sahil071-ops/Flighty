@@ -189,8 +189,10 @@ export function TripDetailPage() {
           supabase.from('trip_documents').select('*').eq('trip_id', tripId!).order('created_at'),
         ]);
         setTrip(tripRes.data);
-        setFlights(flightsRes.data ?? []);
-        setHotels(hotelsRes.data ?? []);
+        setFlights((flightsRes.data ?? []).sort((a, b) =>
+          a.leg_order - b.leg_order || a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
+        ));
+        setHotels((hotelsRes.data ?? []).sort((a, b) => a.check_in_date.localeCompare(b.check_in_date)));
         setDocs(docsRes.data ?? []);
         // Write to IndexedDB for offline access
         const writes: Promise<void>[] = [];
@@ -255,6 +257,16 @@ export function TripDetailPage() {
         file_type: fileType,
       });
       if (insertErr) throw insertErr;
+
+      // Mirror Visas and Travel Insurance to the member's global Documents section
+      if (docMember && (docType === 'Visa' || docType === 'Travel Insurance')) {
+        const memberDocType = docType === 'Visa' ? 'visa' : 'travel_insurance';
+        await supabase.from('member_documents').insert({
+          family_member_id: docMember,
+          document_type: memberDocType,
+          label: docLabel.trim(),
+        });
+      }
 
       setDocFile(null);
       setDocLabel('');
