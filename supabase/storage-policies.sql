@@ -5,6 +5,8 @@
 -- Anonymous auth is used (supabase.auth.signInAnonymously()) so policies must
 -- allow the 'anon' role (unauthenticated) OR authenticated users.
 -- Using auth.role() = 'anon' OR auth.role() = 'authenticated' covers both.
+--
+-- This file is idempotent: safe to re-run at any time.
 
 -- ── member-documents bucket ────────────────────────────────────────────────────
 -- Stores passport scans, visa copies, insurance docs per family member.
@@ -13,6 +15,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('member-documents', 'member-documents', false)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Allow anon read member-documents" ON storage.objects;
 CREATE POLICY "Allow anon read member-documents"
 ON storage.objects FOR SELECT
 USING (
@@ -20,6 +23,7 @@ USING (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon insert member-documents" ON storage.objects;
 CREATE POLICY "Allow anon insert member-documents"
 ON storage.objects FOR INSERT
 WITH CHECK (
@@ -27,6 +31,7 @@ WITH CHECK (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon update member-documents" ON storage.objects;
 CREATE POLICY "Allow anon update member-documents"
 ON storage.objects FOR UPDATE
 USING (
@@ -34,6 +39,7 @@ USING (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon delete member-documents" ON storage.objects;
 CREATE POLICY "Allow anon delete member-documents"
 ON storage.objects FOR DELETE
 USING (
@@ -48,6 +54,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('vouchers', 'vouchers', false)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Allow anon read vouchers" ON storage.objects;
 CREATE POLICY "Allow anon read vouchers"
 ON storage.objects FOR SELECT
 USING (
@@ -55,6 +62,7 @@ USING (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon insert vouchers" ON storage.objects;
 CREATE POLICY "Allow anon insert vouchers"
 ON storage.objects FOR INSERT
 WITH CHECK (
@@ -62,6 +70,7 @@ WITH CHECK (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon update vouchers" ON storage.objects;
 CREATE POLICY "Allow anon update vouchers"
 ON storage.objects FOR UPDATE
 USING (
@@ -69,6 +78,7 @@ USING (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon delete vouchers" ON storage.objects;
 CREATE POLICY "Allow anon delete vouchers"
 ON storage.objects FOR DELETE
 USING (
@@ -83,6 +93,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('tickets', 'tickets', false)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Allow anon read tickets" ON storage.objects;
 CREATE POLICY "Allow anon read tickets"
 ON storage.objects FOR SELECT
 USING (
@@ -90,6 +101,7 @@ USING (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon insert tickets" ON storage.objects;
 CREATE POLICY "Allow anon insert tickets"
 ON storage.objects FOR INSERT
 WITH CHECK (
@@ -97,6 +109,7 @@ WITH CHECK (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon update tickets" ON storage.objects;
 CREATE POLICY "Allow anon update tickets"
 ON storage.objects FOR UPDATE
 USING (
@@ -104,6 +117,7 @@ USING (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon delete tickets" ON storage.objects;
 CREATE POLICY "Allow anon delete tickets"
 ON storage.objects FOR DELETE
 USING (
@@ -118,6 +132,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('documents', 'documents', false)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Allow anon read documents" ON storage.objects;
 CREATE POLICY "Allow anon read documents"
 ON storage.objects FOR SELECT
 USING (
@@ -125,6 +140,7 @@ USING (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon insert documents" ON storage.objects;
 CREATE POLICY "Allow anon insert documents"
 ON storage.objects FOR INSERT
 WITH CHECK (
@@ -132,6 +148,7 @@ WITH CHECK (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon update documents" ON storage.objects;
 CREATE POLICY "Allow anon update documents"
 ON storage.objects FOR UPDATE
 USING (
@@ -139,6 +156,7 @@ USING (
   AND (auth.role() = 'authenticated' OR auth.role() = 'anon')
 );
 
+DROP POLICY IF EXISTS "Allow anon delete documents" ON storage.objects;
 CREATE POLICY "Allow anon delete documents"
 ON storage.objects FOR DELETE
 USING (
@@ -189,18 +207,22 @@ CREATE TABLE IF NOT EXISTS public.member_documents (
 
 ALTER TABLE public.member_documents ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow anon select member_documents" ON public.member_documents;
 CREATE POLICY "Allow anon select member_documents"
 ON public.member_documents FOR SELECT
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
+DROP POLICY IF EXISTS "Allow anon insert member_documents" ON public.member_documents;
 CREATE POLICY "Allow anon insert member_documents"
 ON public.member_documents FOR INSERT
 WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
+DROP POLICY IF EXISTS "Allow anon update member_documents" ON public.member_documents;
 CREATE POLICY "Allow anon update member_documents"
 ON public.member_documents FOR UPDATE
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 
+DROP POLICY IF EXISTS "Allow anon delete member_documents" ON public.member_documents;
 CREATE POLICY "Allow anon delete member_documents"
 ON public.member_documents FOR DELETE
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
@@ -210,6 +232,7 @@ USING (auth.role() = 'authenticated' OR auth.role() = 'anon');
 -- trips table
 ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow anon all trips" ON public.trips;
 CREATE POLICY "Allow anon all trips"
 ON public.trips FOR ALL
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon')
@@ -218,6 +241,7 @@ WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 -- flights table
 ALTER TABLE public.flights ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow anon all flights" ON public.flights;
 CREATE POLICY "Allow anon all flights"
 ON public.flights FOR ALL
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon')
@@ -226,6 +250,7 @@ WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 -- hotels table
 ALTER TABLE public.hotels ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow anon all hotels" ON public.hotels;
 CREATE POLICY "Allow anon all hotels"
 ON public.hotels FOR ALL
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon')
@@ -234,6 +259,7 @@ WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'anon');
 -- trip_documents table
 ALTER TABLE public.trip_documents ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow anon all trip_documents" ON public.trip_documents;
 CREATE POLICY "Allow anon all trip_documents"
 ON public.trip_documents FOR ALL
 USING (auth.role() = 'authenticated' OR auth.role() = 'anon')
