@@ -12,7 +12,7 @@ import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import type { MemberDocument } from '@/types';
 import { getExpiryStatus, daysUntilExpiry } from '@/types';
 
-const DISPLAY_MEMBERS = FAMILY_MEMBERS.filter(m => m.id !== 'admin');
+const DISPLAY_MEMBERS = FAMILY_MEMBERS;
 
 function ExpiryAlertCard({ doc }: { doc: MemberDocument }) {
   const navigate = useNavigate();

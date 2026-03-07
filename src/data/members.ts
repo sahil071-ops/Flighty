@@ -11,7 +11,6 @@ export const FAMILY_MEMBERS: Member[] = [
   { id: 'tehmina',  name: 'Tehmina',  colour: '#f59e0b' },
   { id: 'nirali',   name: 'Nirali',   colour: '#ec4899' },
   { id: 'alfonso',  name: 'Alfonso',  colour: '#ef4444' },
-  { id: 'admin',    name: 'Admin',    colour: '#64748b' },
 ];
 
 export function getMember(id: string): Member | undefined {

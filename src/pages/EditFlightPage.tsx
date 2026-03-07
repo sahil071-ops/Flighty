@@ -107,7 +107,7 @@ export function EditFlightPage() {
           <p className="text-slate-400 text-center py-8">Flight not found.</p>
         ) : (
           <FlightForm
-            members={FAMILY_MEMBERS.filter(m => m.id !== 'admin')}
+            members={FAMILY_MEMBERS}
             currentUserId={currentMember?.id ?? ''}
             initialData={flightToFormData(flight)}
             onSubmit={handleSubmit}

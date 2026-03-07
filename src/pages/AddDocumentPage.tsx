@@ -17,7 +17,7 @@ import {
 } from '@/lib/claudeApi';
 import type { DocumentType, MemberDocument } from '@/types';
 
-const DISPLAY_MEMBERS = FM.filter(m => m.id !== 'admin');
+const DISPLAY_MEMBERS = FM;
 
 type DocTypeOption = { value: DocumentType; label: string; icon: string };
 const DOC_TYPES: DocTypeOption[] = [
