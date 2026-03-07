@@ -6,6 +6,22 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '2.0.3',
+    date: 'March 2026',
+    changes: [
+      'Fixed flight order — now sorted purely by departure time (leg_order values in DB were incorrect)',
+      'Trip card route summary (BOM → LHR → FRA) also now in correct chronological order',
+    ],
+  },
+  {
+    version: '2.0.2',
+    date: 'March 2026',
+    changes: [
+      'Fixed "visa_number column not found" error when saving a visa document',
+      'Visa Number now stored and displayed in the document detail view',
+    ],
+  },
+  {
     version: '2.0.1',
     date: 'March 2026',
     changes: [

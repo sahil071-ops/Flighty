@@ -21,6 +21,7 @@ export interface MemberDocument {
   visa_expiry_date: string | null;
   visa_duration_of_stay: string | null;
   visa_issuing_country: string | null;
+  visa_number: string | null;
   // Travel insurance
   insurance_provider: string | null;
   insurance_policy_number: string | null;
