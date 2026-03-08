@@ -1,13 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" fill="none">
-  <rect width="192" height="192" rx="42" fill="#0f172a"/>
+  <!-- Blue circle background -->
+  <circle cx="96" cy="96" r="96" fill="#0284c7"/>
   <g transform="translate(24, 24)">
     <!-- Plane body -->
-    <path d="M72 28C72 28 88 40 88 56L108 76L88 80L72 64L56 80L36 76L56 56C56 40 72 28 72 28Z" fill="#38bdf8"/>
+    <path d="M72 28C72 28 88 40 88 56L108 76L88 80L72 64L56 80L36 76L56 56C56 40 72 28 72 28Z" fill="white"/>
     <!-- Left wing -->
-    <path d="M56 56L20 72L24 84L56 68" fill="#7dd3fc"/>
+    <path d="M56 56L20 72L24 84L56 68" fill="white" fill-opacity="0.85"/>
     <!-- Right wing -->
-    <path d="M88 56L124 72L120 84L88 68" fill="#7dd3fc"/>
+    <path d="M88 56L124 72L120 84L88 68" fill="white" fill-opacity="0.85"/>
     <!-- Tail -->
-    <path d="M64 80L60 108L72 104L84 108L80 80" fill="#7dd3fc"/>
+    <path d="M64 80L60 108L72 104L84 108L80 80" fill="white" fill-opacity="0.85"/>
   </g>
 </svg>
