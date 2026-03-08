@@ -130,12 +130,9 @@ export function HotelDetailPage() {
   const nights = nightCount(hotel.check_in_date, hotel.check_out_date);
   const location = [hotel.city, hotel.country].filter(Boolean).join(', ');
 
-  function getMapsUrl(): string {
-    const query = hotel.address
-      ? hotel.address
-      : [hotel.hotel_name, hotel.city, hotel.country].filter(Boolean).join(', ');
-    return `https://maps.google.com/?q=${encodeURIComponent(query)}`;
-  }
+  const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(
+    hotel.address ?? [hotel.hotel_name, hotel.city, hotel.country].filter(Boolean).join(', ')
+  )}`;
 
   return (
     <Layout
@@ -216,7 +213,7 @@ export function HotelDetailPage() {
 
         {/* Open in Maps */}
         <a
-          href={getMapsUrl()}
+          href={mapsUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 w-full bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-semibold rounded-xl py-3 transition-colors"
