@@ -130,6 +130,13 @@ export function HotelDetailPage() {
   const nights = nightCount(hotel.check_in_date, hotel.check_out_date);
   const location = [hotel.city, hotel.country].filter(Boolean).join(', ');
 
+  function getMapsUrl(): string {
+    const query = hotel.address
+      ? hotel.address
+      : [hotel.hotel_name, hotel.city, hotel.country].filter(Boolean).join(', ');
+    return `https://maps.google.com/?q=${encodeURIComponent(query)}`;
+  }
+
   return (
     <Layout
       title={hotel.hotel_name}
@@ -206,6 +213,22 @@ export function HotelDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Open in Maps */}
+        <a
+          href={getMapsUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-semibold rounded-xl py-3 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Open in Google Maps
+        </a>
 
         {error && (
           <div className="bg-red-900/40 border border-red-700 rounded-xl p-4 text-sm text-red-300">
