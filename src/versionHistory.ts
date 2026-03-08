@@ -6,6 +6,14 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '2.0.5',
+    date: 'March 2026',
+    changes: [
+      'Hotel detail view now has an "Open in Google Maps" button at the bottom — tapping it opens the hotel location directly in Maps',
+      'App icon updated to a blue circle with a white airplane',
+    ],
+  },
+  {
     version: '2.0.4',
     date: 'March 2026',
     changes: [
