@@ -6,6 +6,13 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '2.0.6',
+    date: 'March 2026',
+    changes: [
+      'Fixed "column not found" error when saving a passport or travel insurance document — AI-only fields (full_name, insured_name) are now stripped before the database insert',
+    ],
+  },
+  {
     version: '2.0.5',
     date: 'March 2026',
     changes: [

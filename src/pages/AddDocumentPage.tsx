@@ -87,12 +87,13 @@ export function AddDocumentPage() {
     let extracted: Record<string, any> = {};
       if (docType === 'passport') {
         extracted = await extractPassportFromFile(selectedFile);
-        // Auto-generate label from full_name
+        // Use full_name only for label generation — it is not a DB column
         const name = extracted.full_name as string | null;
         const country = extracted.passport_country_of_issue as string | null;
+        const { full_name: _fn, ...passportForForm } = extracted;
         setForm(prev => ({
           ...prev,
-          ...(extracted as FormState),
+          ...(passportForForm as FormState),
           expiry_date: (extracted.passport_expiry_date as string) ?? null,
           label: prev.label || (name ? `${name}${country ? ` - ${country} Passport` : ' - Passport'}` : ''),
         }));
@@ -108,9 +109,11 @@ export function AddDocumentPage() {
       } else if (docType === 'travel_insurance') {
         extracted = await extractInsuranceFromFile(selectedFile);
         const provider = extracted.insurance_provider as string | null;
+        // insured_name is not a DB column — strip before storing in form
+        const { insured_name: _in, ...insuranceForForm } = extracted;
         setForm(prev => ({
           ...prev,
-          ...(extracted as FormState),
+          ...(insuranceForForm as FormState),
           expiry_date: (extracted.insurance_end_date as string) ?? null,
           label: prev.label || (provider ? `${provider} Insurance` : ''),
         }));
