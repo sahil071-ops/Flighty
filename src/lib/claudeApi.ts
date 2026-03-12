@@ -47,6 +47,25 @@ const HOTEL_SYSTEM_PROMPT = `You are a hotel booking parser. Extract all hotel d
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+/** Convert HEIC/HEIF to JPEG. Returns the original file for all other types. */
+async function normalizeFile(file: File): Promise<File> {
+  const isHeic =
+    file.type === 'image/heic' ||
+    file.type === 'image/heif' ||
+    /\.heic$/i.test(file.name) ||
+    /\.heif$/i.test(file.name);
+  if (!isHeic) return file;
+  try {
+    const heic2any = (await import('heic2any')).default;
+    const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 });
+    const blob = Array.isArray(result) ? result[0] : result;
+    const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+    return new File([blob], newName, { type: 'image/jpeg' });
+  } catch (err) {
+    throw new Error(`Could not convert HEIC image: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 export function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -91,7 +110,8 @@ async function callClaude(systemPrompt: string, file: File, userText: string): P
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string;
   if (!apiKey) throw new Error('Anthropic API key not configured. Set VITE_ANTHROPIC_API_KEY.');
 
-  const base64 = await fileToBase64(file);
+  const normalizedFile = await normalizeFile(file);
+  const base64 = await fileToBase64(normalizedFile);
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -109,7 +129,7 @@ async function callClaude(systemPrompt: string, file: File, userText: string): P
         {
           role: 'user',
           content: [
-            buildContentBlock(base64, file),
+            buildContentBlock(base64, normalizedFile),
             { type: 'text', text: userText },
           ],
         },

@@ -305,7 +305,7 @@ export function AddDocumentPage() {
                   <input
                     type="file"
                     className="sr-only"
-                    accept="application/pdf,image/jpeg,image/png,image/webp"
+                    accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
                     onChange={e => {
                       const f = e.target.files?.[0];
                       if (f) handleFileExtract(f);

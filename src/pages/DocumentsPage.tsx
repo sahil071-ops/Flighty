@@ -127,7 +127,7 @@ export function DocumentsPage() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-4 pb-24 flex flex-col gap-5">
+      <main className="flex-1 px-4 py-4 flex flex-col gap-5" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
         {loading ? (
           <div className="flex justify-center py-16"><LoadingSpinner size="lg" /></div>
         ) : (

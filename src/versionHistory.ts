@@ -6,6 +6,16 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '2.0.7',
+    date: 'March 2026',
+    changes: [
+      'Documents list and member documents no longer get cut off by the bottom navigation bar on iPhone',
+      'View File button now works on iOS — uses a secure signed URL instead of a blob URL that Safari blocked',
+      'New Download button on every document so you can save files directly to your device',
+      'HEIC/HEIF photos from iPhone camera are now accepted and auto-converted before AI extraction',
+    ],
+  },
+  {
     version: '2.0.6',
     date: 'March 2026',
     changes: [
