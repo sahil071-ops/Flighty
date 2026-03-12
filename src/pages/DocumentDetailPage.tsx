@@ -9,7 +9,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Layout } from '@/components/layout/Layout';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { isDocFileCached, openDocFileBlob, cacheDocFile } from '@/lib/docFileCache';
+import { isDocFileCached, openDocFileBlob, cacheDocFile, downloadDocFile } from '@/lib/docFileCache';
 import { invalidateExpiryCache } from '@/components/layout/BottomNav';
 import type { MemberDocument } from '@/types';
 import { getExpiryStatus, daysUntilExpiry } from '@/types';
@@ -95,10 +95,32 @@ export function DocumentDetailPage() {
     if (!doc?.file_url) return;
     setFileLoading(true);
     try {
-      await openDocFileBlob(doc.file_url);
+      if (isOnline) {
+        // Signed URL avoids blob: popup-blocker issues on iOS Safari
+        const { data, error } = await supabase.storage
+          .from('member-documents')
+          .createSignedUrl(doc.file_url, 120);
+        if (error || !data?.signedUrl) throw new Error('Could not generate file URL');
+        window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        await openDocFileBlob(doc.file_url);
+      }
       setFileCached(true);
     } catch {
       setError('Failed to open file. Check your connection.');
+    } finally {
+      setFileLoading(false);
+    }
+  }
+
+  async function handleDownloadFile() {
+    if (!doc?.file_url) return;
+    setFileLoading(true);
+    try {
+      const ext = doc.file_type === 'pdf' ? 'pdf' : (doc.file_type ?? 'jpg');
+      await downloadDocFile(doc.file_url, `${doc.label}.${ext}`);
+    } catch {
+      setError('Failed to download file. Check your connection.');
     } finally {
       setFileLoading(false);
     }
@@ -264,9 +286,12 @@ export function DocumentDetailPage() {
                 {fileCached ? 'Saved offline ✓' : 'Not cached'}
               </span>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <Button variant="primary" onClick={handleViewFile} loading={fileLoading} className="flex-1">
                 View File
+              </Button>
+              <Button variant="secondary" onClick={handleDownloadFile} loading={fileLoading}>
+                Download
               </Button>
               {!fileCached && (
                 <Button variant="secondary" onClick={handleCacheFile} loading={fileLoading}>
