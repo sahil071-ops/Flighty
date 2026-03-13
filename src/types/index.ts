@@ -185,6 +185,46 @@ export interface HotelFormData {
   notes?: string;
 }
 
+// ── Car Rentals ────────────────────────────────────────────────────────────────
+
+export interface CarRental {
+  id: string;
+  trip_id: string;
+  family_member_id: string;
+  company: string;
+  car_type: string | null;
+  pickup_location: string;
+  dropoff_location: string | null;
+  pickup_date: string;         // YYYY-MM-DD
+  pickup_time: string | null;  // HH:MM
+  dropoff_date: string;        // YYYY-MM-DD
+  dropoff_time: string | null;
+  confirmation_number: string | null;
+  booking_reference: string | null;
+  driver_name: string | null;
+  price: string | null;
+  notes: string | null;
+  voucher_url: string | null;
+  created_at: string;
+}
+
+export interface CarRentalFormData {
+  family_member_id: string;
+  company: string;
+  car_type?: string;
+  pickup_location: string;
+  dropoff_location?: string;
+  pickup_date: string;
+  pickup_time?: string;
+  dropoff_date: string;
+  dropoff_time?: string;
+  confirmation_number?: string;
+  booking_reference?: string;
+  driver_name?: string;
+  price?: string;
+  notes?: string;
+}
+
 // ── Legacy colour palette (used by member picker) ─────────────────────────────
 
 export const AVATAR_COLOURS = [

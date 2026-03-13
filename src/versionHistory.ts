@@ -6,6 +6,16 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '2.0.8',
+    date: 'March 2026',
+    changes: [
+      'Car Rentals added to trips — track your hire car alongside flights and hotels',
+      'Upload your rental confirmation (PDF, photo, or HEIC) and AI fills in the details automatically',
+      'Car rental detail page shows pick-up/drop-off, duration, confirmation number, voucher, and a Maps button for the pick-up location',
+      'Car rentals are included in the WhatsApp trip share',
+    ],
+  },
+  {
     version: '2.0.7',
     date: 'March 2026',
     changes: [

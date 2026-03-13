@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import type { Flight, Trip, Hotel, TripDocument, MemberDocument } from '@/types';
+import type { Flight, Trip, Hotel, CarRental, TripDocument, MemberDocument } from '@/types';
 
 interface FamilyFlightsDB extends DBSchema {
   member_documents: {
@@ -25,6 +25,11 @@ interface FamilyFlightsDB extends DBSchema {
     value: Hotel;
     indexes: { 'by-trip': string };
   };
+  car_rentals: {
+    key: string;
+    value: CarRental;
+    indexes: { 'by-trip': string };
+  };
   trip_documents: {
     key: string;
     value: TripDocument;
@@ -44,7 +49,7 @@ let db: IDBPDatabase<FamilyFlightsDB> | null = null;
 
 async function getDB(): Promise<IDBPDatabase<FamilyFlightsDB>> {
   if (db) return db;
-  db = await openDB<FamilyFlightsDB>('family-flights', 5, {
+  db = await openDB<FamilyFlightsDB>('family-flights', 6, {
     upgrade(database, oldVersion) {
       if (oldVersion < 1) {
         const flightStore = database.createObjectStore('flights', { keyPath: 'id' });
@@ -94,6 +99,12 @@ async function getDB(): Promise<IDBPDatabase<FamilyFlightsDB>> {
       if (oldVersion < 5) {
         if (!database.objectStoreNames.contains('cached_files')) {
           database.createObjectStore('cached_files', { keyPath: 'key' });
+        }
+      }
+      if (oldVersion < 6) {
+        if (!database.objectStoreNames.contains('car_rentals')) {
+          const cr = database.createObjectStore('car_rentals', { keyPath: 'id' });
+          cr.createIndex('by-trip', 'trip_id');
         }
       }
     },
@@ -166,6 +177,25 @@ export async function getCachedHotels(): Promise<Hotel[]> {
 export async function getCachedHotel(id: string): Promise<Hotel | undefined> {
   const database = await getDB();
   return database.get('hotels', id);
+}
+
+// ── Car Rentals ────────────────────────────────────────────────────────────────
+
+export async function cacheCarRentals(rentals: CarRental[]): Promise<void> {
+  const database = await getDB();
+  const tx = database.transaction('car_rentals', 'readwrite');
+  await Promise.all(rentals.map(r => tx.store.put(r)));
+  await tx.done;
+}
+
+export async function getCachedCarRentals(): Promise<CarRental[]> {
+  const database = await getDB();
+  return database.getAll('car_rentals');
+}
+
+export async function getCachedCarRental(id: string): Promise<CarRental | undefined> {
+  const database = await getDB();
+  return database.get('car_rentals', id);
 }
 
 // ── Trip Documents ─────────────────────────────────────────────────────────────
@@ -252,6 +282,7 @@ export async function clearAllCache(): Promise<void> {
     database.clear('trips'),
     database.clear('flights'),
     database.clear('hotels'),
+    database.clear('car_rentals'),
     database.clear('trip_documents'),
     database.clear('meta'),
     database.clear('cached_files'),

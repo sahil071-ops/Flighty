@@ -12,6 +12,8 @@ import { EditFlightPage } from '@/pages/EditFlightPage';
 import { AddTripPage } from '@/pages/AddTripPage';
 import { TripDetailPage } from '@/pages/TripDetailPage';
 import { AddHotelPage } from '@/pages/AddHotelPage';
+import { AddCarRentalPage } from '@/pages/AddCarRentalPage';
+import { CarRentalDetailPage } from '@/pages/CarRentalDetailPage';
 import { DocumentsPage } from '@/pages/DocumentsPage';
 import { MemberDocumentsPage } from '@/pages/MemberDocumentsPage';
 import { AddDocumentPage } from '@/pages/AddDocumentPage';
@@ -37,6 +39,7 @@ function AppRoutes() {
       <Route path="/trips/:tripId" element={<TripDetailPage />} />
       <Route path="/trips/:tripId/flights/add" element={<AddFlightPage />} />
       <Route path="/trips/:tripId/hotels/add" element={<AddHotelPage />} />
+      <Route path="/trips/:tripId/car-rentals/add" element={<AddCarRentalPage />} />
 
       {/* Flights */}
       <Route path="/flights/:id" element={<FlightDetailPage />} />
@@ -50,6 +53,9 @@ function AppRoutes() {
 
       {/* Hotels */}
       <Route path="/hotels/:hotelId" element={<HotelDetailPage />} />
+
+      {/* Car rentals */}
+      <Route path="/car-rentals/:rentalId" element={<CarRentalDetailPage />} />
 
       {/* Version history */}
       <Route path="/whats-new" element={<WhatsNewPage />} />
