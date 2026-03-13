@@ -253,6 +253,29 @@ export async function extractOtherDocFromFile(file: File): Promise<ExtractedOthe
   return callClaudeForDoc<ExtractedOtherDoc>(OTHER_DOC_SYSTEM_PROMPT, file, 'Extract any relevant details from this document.');
 }
 
+// ── Car rental extraction ──────────────────────────────────────────────────────
+
+export interface ExtractedCarRental {
+  company: string | null;
+  car_type: string | null;
+  pickup_location: string | null;
+  dropoff_location: string | null;
+  pickup_date: string | null;
+  pickup_time: string | null;
+  dropoff_date: string | null;
+  dropoff_time: string | null;
+  confirmation_number: string | null;
+  booking_reference: string | null;
+  driver_name: string | null;
+  price: string | null;
+}
+
+const CAR_RENTAL_SYSTEM_PROMPT = `You are a car rental booking parser. Extract all details from this rental confirmation and return ONLY a JSON object (no markdown, no preamble) with these fields: company (rental company name e.g. Hertz, Avis, Enterprise, Budget), car_type (e.g. Economy, SUV, Compact, Full-Size), pickup_location (full location name or address), dropoff_location (if different from pickup otherwise null), pickup_date (YYYY-MM-DD), pickup_time (HH:MM or null), dropoff_date (YYYY-MM-DD), dropoff_time (HH:MM or null), confirmation_number (or null), booking_reference (or null), driver_name (main driver full name or null), price (total price as string including currency or null). If any field cannot be determined use null.`;
+
+export async function extractCarRentalFromFile(file: File): Promise<ExtractedCarRental> {
+  return callClaudeForDoc<ExtractedCarRental>(CAR_RENTAL_SYSTEM_PROMPT, file, 'Extract all car rental details from this booking confirmation.');
+}
+
 /** @deprecated Use extractFlightsFromFile(file) instead. */
 export async function extractFlightsFromPDF(pdfBase64: string): Promise<ExtractedFlight[]> {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string;

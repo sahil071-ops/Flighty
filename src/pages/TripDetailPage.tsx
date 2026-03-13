@@ -4,8 +4,8 @@ import { useApp } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
 import {
-  getCachedTrip, getCachedFlights, getCachedHotels,
-  cacheTrips, cacheFlights, cacheHotels,
+  getCachedTrip, getCachedFlights, getCachedHotels, getCachedCarRentals,
+  cacheTrips, cacheFlights, cacheHotels, cacheCarRentals,
 } from '@/lib/db';
 import { getMember } from '@/data/members';
 import { Layout } from '@/components/layout/Layout';
@@ -14,9 +14,10 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { FlightCard } from '@/components/flights/FlightCard';
 import { HotelCard } from '@/components/hotels/HotelCard';
+import { CarRentalCard } from '@/components/cars/CarRentalCard';
 import { downloadICS } from '@/lib/icsGenerator';
 import { getDurationString, formatLocalTime, getTimezoneAbbr } from '@/lib/timezone';
-import type { Trip, Flight, Hotel, MemberDocument } from '@/types';
+import type { Trip, Flight, Hotel, CarRental, MemberDocument } from '@/types';
 
 // ── Layover block ──────────────────────────────────────────────────────────────
 
@@ -189,6 +190,7 @@ export function TripDetailPage() {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [flights, setFlights] = useState<Flight[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [carRentals, setCarRentals] = useState<CarRental[]>([]);
   const [linkedDocs, setLinkedDocs] = useState<LinkedDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -205,10 +207,11 @@ export function TripDetailPage() {
     setError(null);
     try {
       if (isOnline) {
-        const [tripRes, flightsRes, hotelsRes, linksRes] = await Promise.all([
+        const [tripRes, flightsRes, hotelsRes, carRentalsRes, linksRes] = await Promise.all([
           supabase.from('trips').select('*').eq('id', tripId!).maybeSingle(),
           supabase.from('flights').select('*').eq('trip_id', tripId!),
           supabase.from('hotels').select('*').eq('trip_id', tripId!).order('check_in_date'),
+          supabase.from('car_rentals').select('*').eq('trip_id', tripId!).order('pickup_date'),
           supabase.from('trip_document_links').select('id, member_documents(*)').eq('trip_id', tripId!),
         ]);
         setTrip(tripRes.data);
@@ -216,6 +219,7 @@ export function TripDetailPage() {
           a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
         ));
         setHotels((hotelsRes.data ?? []).sort((a, b) => a.check_in_date.localeCompare(b.check_in_date)));
+        setCarRentals((carRentalsRes.data ?? []) as CarRental[]);
         setLinkedDocs(
           (linksRes.data ?? [])
             .filter(r => r.member_documents)
@@ -226,18 +230,21 @@ export function TripDetailPage() {
         if (tripRes.data) writes.push(cacheTrips([tripRes.data]));
         if (flightsRes.data?.length) writes.push(cacheFlights(flightsRes.data));
         if (hotelsRes.data?.length) writes.push(cacheHotels(hotelsRes.data));
+        if (carRentalsRes.data?.length) writes.push(cacheCarRentals(carRentalsRes.data as CarRental[]));
         Promise.all(writes).catch(() => { /* non-critical */ });
       } else {
-        const [cachedTrip, cachedFlights, cachedHotels] = await Promise.all([
+        const [cachedTrip, cachedFlights, cachedHotels, cachedRentals] = await Promise.all([
           getCachedTrip(tripId!),
           getCachedFlights(),
           getCachedHotels(),
+          getCachedCarRentals(),
         ]);
         setTrip(cachedTrip ?? null);
         setFlights(cachedFlights.filter(f => f.trip_id === tripId).sort((a, b) =>
           a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
         ));
         setHotels(cachedHotels.filter(h => h.trip_id === tripId));
+        setCarRentals(cachedRentals.filter(r => r.trip_id === tripId));
         setLinkedDocs([]); // not cached offline
       }
     } catch (err) {
@@ -335,6 +342,14 @@ export function TripDetailPage() {
       for (const h of hotels) {
         const memberName = getMember(h.family_member_id)?.name ?? h.family_member_id;
         lines.push(`${h.hotel_name}${h.city ? `, ${h.city}` : ''} · Check-in ${h.check_in_date} → ${h.check_out_date} · ${memberName}${h.confirmation_number ? ` · Ref: ${h.confirmation_number}` : ''}`);
+      }
+    }
+
+    if (carRentals.length > 0) {
+      lines.push('\n*Car Rentals:*');
+      for (const r of carRentals) {
+        const memberName = getMember(r.family_member_id)?.name ?? r.family_member_id;
+        lines.push(`${r.company}${r.car_type ? ` (${r.car_type})` : ''} · Pick-up ${r.pickup_date} → ${r.dropoff_date} · ${memberName}${r.confirmation_number ? ` · Ref: ${r.confirmation_number}` : ''}`);
       }
     }
 
@@ -451,6 +466,29 @@ export function TripDetailPage() {
           <div className="flex flex-col gap-3">
             {hotels.map(h => (
               <HotelCard key={h.id} hotel={h} member={getMember(h.family_member_id)} showMember={members.length > 1} />
+            ))}
+          </div>
+        )}
+
+        {/* ── Car Rentals ── */}
+        <div className="flex items-center justify-between mt-2">
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Car Rentals</h2>
+          {isOnline && (
+            <Link to={`/trips/${trip.id}/car-rentals/add`} className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Add car rental
+            </Link>
+          )}
+        </div>
+
+        {carRentals.length === 0 ? (
+          <p className="text-sm text-slate-500 pl-1">No car rentals added yet.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {carRentals.map(r => (
+              <CarRentalCard key={r.id} rental={r} member={getMember(r.family_member_id)} showMember={members.length > 1} />
             ))}
           </div>
         )}
