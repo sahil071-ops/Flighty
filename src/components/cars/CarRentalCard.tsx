@@ -27,18 +27,22 @@ export function CarRentalCard({ rental, member, showMember = true }: CarRentalCa
   const sameLocation =
     !rental.dropoff_location ||
     rental.dropoff_location.trim().toLowerCase() === rental.pickup_location.trim().toLowerCase();
+  const today = new Date().toISOString().slice(0, 10);
+  const isPast = rental.dropoff_date < today;
 
   return (
     <Link
       to={`/car-rentals/${rental.id}`}
-      className="block bg-slate-800 rounded-xl overflow-hidden border border-slate-700 active:scale-[0.99] transition-transform"
+      className={`block rounded-xl overflow-hidden border active:scale-[0.99] transition-transform ${isPast ? 'opacity-50 border-slate-800' : 'bg-slate-800 border-slate-700'}`}
+      style={isPast ? { backgroundColor: '#1a2030' } : undefined}
     >
-      <div className="h-0.5" style={{ backgroundColor: colour }} />
+      <div className="h-0.5" style={{ backgroundColor: isPast ? '#334155' : colour }} />
       <div className="p-4">
         {showMember && member && (
           <div className="flex items-center gap-2 mb-3">
-            <Avatar name={member.name} colour={colour} size="sm" />
+            <Avatar name={member.name} colour={isPast ? '#64748b' : colour} size="sm" />
             <span className="text-xs text-slate-400 font-medium">{member.name}</span>
+            {isPast && <span className="text-[10px] bg-slate-700 text-slate-500 px-1.5 py-0.5 rounded ml-auto">Completed</span>}
           </div>
         )}
 

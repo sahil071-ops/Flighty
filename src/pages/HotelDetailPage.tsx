@@ -8,7 +8,6 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Layout } from '@/components/layout/Layout';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { isFileCached, openFile, cacheFile } from '@/lib/fileCache';
 import type { Hotel } from '@/types';
 
 function Row({ label, value }: { label: string; value: string | null | undefined }) {
@@ -39,7 +38,6 @@ export function HotelDetailPage() {
   const { isOnline } = useOffline();
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [loading, setLoading] = useState(true);
-  const [voucherCached, setVoucherCached] = useState(false);
   const [fileLoading, setFileLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,12 +45,6 @@ export function HotelDetailPage() {
     if (!hotelId) return;
     loadHotel();
   }, [hotelId]);
-
-  useEffect(() => {
-    if (hotel?.voucher_url) {
-      isFileCached('vouchers', hotel.voucher_url).then(setVoucherCached);
-    }
-  }, [hotel?.voucher_url]);
 
   async function loadHotel() {
     setLoading(true);
@@ -81,8 +73,11 @@ export function HotelDetailPage() {
     if (!hotel?.voucher_url) return;
     setFileLoading(true);
     try {
-      await openFile('vouchers', hotel.voucher_url);
-      setVoucherCached(true);
+      const { data, error } = await supabase.storage
+        .from('vouchers')
+        .createSignedUrl(hotel.voucher_url, 120);
+      if (error || !data?.signedUrl) throw new Error('Could not generate file URL');
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
     } catch {
       setError('Failed to open voucher. Check your connection.');
     } finally {
@@ -90,14 +85,20 @@ export function HotelDetailPage() {
     }
   }
 
-  async function handleCacheVoucher() {
+  async function handleDownloadVoucher() {
     if (!hotel?.voucher_url) return;
     setFileLoading(true);
     try {
-      await cacheFile('vouchers', hotel.voucher_url);
-      setVoucherCached(true);
+      const { data, error } = await supabase.storage
+        .from('vouchers')
+        .createSignedUrl(hotel.voucher_url, 120);
+      if (error || !data?.signedUrl) throw new Error('Could not generate file URL');
+      const a = document.createElement('a');
+      a.href = data.signedUrl;
+      a.download = hotel.voucher_url.split('/').pop() ?? 'voucher';
+      a.click();
     } catch {
-      setError('Failed to save voucher for offline access.');
+      setError('Failed to download voucher. Check your connection.');
     } finally {
       setFileLoading(false);
     }
@@ -187,26 +188,15 @@ export function HotelDetailPage() {
 
         {/* Voucher */}
         {hotel.voucher_url && (
-          <div className="bg-slate-800 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-white">Hotel Voucher</h3>
-              <span className={`text-xs px-2 py-0.5 rounded ${
-                voucherCached
-                  ? 'bg-emerald-900/60 text-emerald-400'
-                  : 'bg-slate-700 text-slate-400'
-              }`}>
-                {voucherCached ? 'Saved offline ✓' : 'Not cached'}
-              </span>
-            </div>
+          <div className="bg-slate-800 rounded-xl p-4 flex flex-col gap-3">
+            <h3 className="text-sm font-semibold text-white">Hotel Voucher</h3>
             <div className="flex gap-3">
               <Button variant="primary" onClick={handleViewVoucher} loading={fileLoading} className="flex-1">
                 View Voucher
               </Button>
-              {!voucherCached && (
-                <Button variant="secondary" onClick={handleCacheVoucher} loading={fileLoading}>
-                  Save offline
-                </Button>
-              )}
+              <Button variant="secondary" onClick={handleDownloadVoucher} loading={fileLoading}>
+                Download
+              </Button>
             </div>
           </div>
         )}
