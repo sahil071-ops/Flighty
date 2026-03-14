@@ -26,9 +26,13 @@ export function AddCarRentalPage() {
   }
 
   async function handleSubmit(data: CarRentalFormData, voucherFile?: File) {
+    // Postgres rejects "" for time/date columns — convert all empty strings to null
+    const payload = Object.fromEntries(
+      Object.entries({ ...data, trip_id: tripId }).map(([k, v]) => [k, v === '' ? null : v])
+    );
     const { data: inserted, error } = await supabase
       .from('car_rentals')
-      .insert({ ...data, trip_id: tripId })
+      .insert(payload)
       .select()
       .single();
 

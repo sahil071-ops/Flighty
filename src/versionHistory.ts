@@ -6,6 +6,16 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '2.0.9',
+    date: 'March 2026',
+    changes: [
+      'Past flights, hotels, and car rentals are now greyed out with a "Completed" badge so you can tell at a glance which legs of the journey are done',
+      'Hotel voucher View button now works on iOS — uses a signed URL (same fix applied to car rentals previously)',
+      'New Download button on hotel vouchers',
+      'Fixed empty time fields causing a database error when adding a car rental',
+    ],
+  },
+  {
     version: '2.0.8',
     date: 'March 2026',
     changes: [

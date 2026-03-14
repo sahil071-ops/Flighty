@@ -17,6 +17,7 @@ interface FlightCardProps {
 }
 
 export function FlightCard({ flight, member, showMember = true, grouped = false }: FlightCardProps) {
+  const isPast = flight.arrival_datetime_utc < new Date().toISOString();
   const depTime = formatLocalTime(flight.departure_datetime_utc, flight.departure_timezone);
   const arrTime = formatLocalTime(flight.arrival_datetime_utc, flight.arrival_timezone);
   const depDate = formatLocalDateCard(flight.departure_datetime_utc, flight.departure_timezone);
@@ -29,21 +30,26 @@ export function FlightCard({ flight, member, showMember = true, grouped = false 
   return (
     <Link
       to={`/flights/${flight.id}`}
-      className={`block bg-slate-800 overflow-hidden hover:bg-slate-750 active:scale-[0.99] transition-all ${grouped ? '' : 'rounded-xl'}`}
+      className={`block overflow-hidden active:scale-[0.99] transition-all ${grouped ? '' : 'rounded-xl'} ${isPast ? 'opacity-50' : 'bg-slate-800 hover:bg-slate-750'}`}
+      style={isPast ? { backgroundColor: '#1a2030' } : undefined}
     >
       {/* Colour accent bar */}
-      {!grouped && <div className="h-0.5" style={{ backgroundColor: colour }} />}
+      {!grouped && <div className="h-0.5" style={{ backgroundColor: isPast ? '#334155' : colour }} />}
 
       <div className="p-4">
         {/* Top row: member + date */}
         {showMember && member ? (
           <div className="flex items-center gap-2 mb-3">
-            <Avatar name={member.name} colour={colour} size="sm" />
+            <Avatar name={member.name} colour={isPast ? '#64748b' : colour} size="sm" />
             <span className="text-xs text-slate-400 font-medium">{member.name}</span>
             <span className="text-sm font-medium text-slate-300 ml-auto">{depDate}</span>
+            {isPast && <span className="text-[10px] bg-slate-700 text-slate-500 px-1.5 py-0.5 rounded ml-1">Completed</span>}
           </div>
         ) : (
-          <div className="text-sm font-medium text-slate-300 mb-3">{depDate}</div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-medium text-slate-300">{depDate}</div>
+            {isPast && <span className="text-[10px] bg-slate-700 text-slate-500 px-1.5 py-0.5 rounded">Completed</span>}
+          </div>
         )}
 
         {/* Route row */}
