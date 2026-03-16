@@ -6,6 +6,21 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '3.0.0',
+    date: 'March 2026',
+    changes: [
+      'Smart document parsing: boarding passes via BCBP standard barcode (no AI), passports via MRZ parser (no AI for PDFs). Claude API only for visas, hotels, insurance, and as fallback',
+      'Boarding pass upload on every flight — QR code full-screen display (tap to show, screen stays on)',
+      'Live flight status via AviationStack — manual refresh only, free-tier safe, cached for 15 minutes',
+      'Flying Now card on home screen for flights departing within 3 hours, with deduplication across family members',
+      'Online check-in button for all major airlines (BA, EK, LH, QR, SQ, and 14 more)',
+      'Copy booking reference with one tap — Copied! confirmation',
+      'Loyalty cards in Documents tab — add frequent flyer numbers, matched automatically on flight pages by IATA code or alliance',
+      'Check-in reminders via push notification at 48h and 24h before departure',
+      'Device-member association — notifications go to the right person\'s phone',
+    ],
+  },
+  {
     version: '2.0.9',
     date: 'March 2026',
     changes: [

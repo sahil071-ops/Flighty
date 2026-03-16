@@ -225,6 +225,60 @@ export interface CarRentalFormData {
   notes?: string;
 }
 
+// ── Boarding Passes ────────────────────────────────────────────────────────────
+
+export interface BoardingPass {
+  id: string;
+  flight_id: string;
+  trip_id: string;
+  passenger_name: string | null;
+  gate: string | null;
+  seat: string | null;
+  boarding_time: string | null;
+  departure_time: string | null;
+  departure_date: string | null;
+  sequence_number: string | null;
+  fare_class: string | null;
+  has_qr_code: boolean;
+  file_url: string | null;
+  file_type: string | null;
+  created_at: string;
+}
+
+// ── Loyalty Cards ──────────────────────────────────────────────────────────────
+
+export interface LoyaltyCard {
+  id: string;
+  family_member_id: string;
+  airline_name: string;
+  airline_iata_code: string | null;
+  programme_name: string;
+  member_number: string;
+  tier: string | null;
+  alliance: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+// ── Flight Status ──────────────────────────────────────────────────────────────
+
+export type FlightStatusCode = 'scheduled' | 'active' | 'landed' | 'cancelled' | 'incident' | 'diverted';
+
+export interface FlightStatus {
+  flight_number: string;
+  date: string; // YYYY-MM-DD
+  status: FlightStatusCode;
+  departure_scheduled: string | null;
+  departure_actual: string | null;
+  arrival_scheduled: string | null;
+  arrival_actual: string | null;
+  departure_gate: string | null;
+  arrival_gate: string | null;
+  departure_delay: number | null;
+  arrival_delay: number | null;
+  last_fetched: string; // ISO timestamp
+}
+
 // ── Legacy colour palette (used by member picker) ─────────────────────────────
 
 export const AVATAR_COLOURS = [

@@ -15,6 +15,7 @@ import {
   extractInsuranceFromFile,
   extractOtherDocFromFile,
 } from '@/lib/claudeApi';
+import { parseMRZ, convertIfHeic } from '@/lib/documentParser';
 import type { DocumentType, MemberDocument } from '@/types';
 
 const DISPLAY_MEMBERS = FM;
@@ -86,7 +87,15 @@ export function AddDocumentPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let extracted: Record<string, any> = {};
       if (docType === 'passport') {
-        extracted = await extractPassportFromFile(selectedFile);
+        // Tier 1: Try MRZ parsing (works for PDF passports)
+        const processedFile = await convertIfHeic(selectedFile);
+        const mrzResult = await parseMRZ(processedFile);
+        if (mrzResult.confidence === 'high') {
+          extracted = mrzResult;
+        } else {
+          // Tier 2: Claude API
+          extracted = await extractPassportFromFile(selectedFile);
+        }
         // Use full_name only for label generation — it is not a DB column
         const name = extracted.full_name as string | null;
         const country = extracted.passport_country_of_issue as string | null;
@@ -316,7 +325,7 @@ export function AddDocumentPage() {
               {extracting && (
                 <div className="flex items-center gap-2 mt-3 text-sm text-sky-400">
                   <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
-                  Extracting details with AI...
+                  {docType === 'passport' ? 'Reading passport…' : 'Analysing document with AI…'}
                 </div>
               )}
               {extractError && (
