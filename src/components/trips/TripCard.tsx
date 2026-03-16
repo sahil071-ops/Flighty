@@ -62,7 +62,7 @@ export function TripCard({ trip, flights, hotels }: TripCardProps) {
           <div className="flex -space-x-1.5 flex-shrink-0 mt-0.5">
             {members.slice(0, 5).map(m => m && (
               <Avatar key={m.id} name={m.name} colour={m.colour} size="xs"
-                className="ring-[1.5px]" style={{ '--tw-ring-color': '#0E1525' } as React.CSSProperties} />
+                className="ring-[1.5px] ring-[#0E1525]" />
             ))}
           </div>
         </div>
