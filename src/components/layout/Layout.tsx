@@ -12,15 +12,15 @@ interface LayoutProps {
 
 export function Layout({ children, title, headerRight, hideNav = false }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col">
       <OfflineBanner />
       {title && (
         <header
-          className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800"
+          className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-xl border-b border-white/[.06]"
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
           <div className="flex items-center justify-between px-4 h-14">
-            <h1 className="text-lg font-semibold text-white">{title}</h1>
+            <h1 className="text-[15px] font-semibold tracking-tight text-white">{title}</h1>
             {headerRight && <div>{headerRight}</div>}
           </div>
         </header>

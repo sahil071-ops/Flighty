@@ -8,16 +8,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary: 'bg-sky-500 hover:bg-sky-400 text-white',
-  secondary: 'bg-slate-700 hover:bg-slate-600 text-white',
-  danger: 'bg-red-600 hover:bg-red-500 text-white',
-  ghost: 'bg-transparent hover:bg-slate-700 text-slate-300',
+  primary:   'bg-cyan-400 hover:bg-cyan-300 text-black font-semibold',
+  secondary: 'bg-transparent border border-white/[.12] text-slate-200 hover:border-white/[.22] hover:bg-white/[.04]',
+  danger:    'bg-transparent border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/60',
+  ghost:     'bg-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[.05]',
 };
 
 const sizes = {
-  sm: 'px-3 py-1.5 text-sm',
+  sm: 'px-3 py-1.5 text-[13px]',
   md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
+  lg: 'px-6 py-3 text-[15px]',
 };
 
 export function Button({
@@ -33,8 +33,8 @@ export function Button({
     <button
       className={`
         ${variants[variant]} ${sizes[size]}
-        rounded-lg font-medium transition-colors
-        disabled:opacity-50 disabled:cursor-not-allowed
+        rounded-lg font-medium tracking-tight transition-all duration-150
+        disabled:opacity-40 disabled:cursor-not-allowed
         flex items-center justify-center gap-2
         ${className}
       `}

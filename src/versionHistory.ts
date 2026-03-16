@@ -6,6 +6,20 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '3.1.0',
+    date: 'March 2026',
+    changes: [
+      'Redesigned visual language — Obsidian design system with Inter typeface, deeper dark palette, and cyan accent',
+      'Member cards now use each person\'s colour as a personalised tint and border glow',
+      'Flight cards upgraded: larger time typography, member-coloured plane icon, gradient flight path',
+      'Trip cards use a bold left-border accent instead of a thin top bar',
+      'Flying Now card stripped of generic gradient — clean dark surface with cyan edge treatment',
+      'Navigation refined with cyan active indicators and hairline top accent',
+      'Buttons redesigned: primary is high-contrast cyan/black, secondary uses transparent border treatment',
+      'Avatars now support XL size (64px) for the home screen member grid',
+    ],
+  },
+  {
     version: '3.0.0',
     date: 'March 2026',
     changes: [

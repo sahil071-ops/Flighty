@@ -13,7 +13,7 @@ interface FlightCardProps {
   flight: Flight;
   member?: Member;
   showMember?: boolean;
-  grouped?: boolean; // true when rendered inside a TripGroup (removes outer rounding)
+  grouped?: boolean;
 }
 
 export function FlightCard({ flight, member, showMember = true, grouped = false }: FlightCardProps) {
@@ -26,77 +26,112 @@ export function FlightCard({ flight, member, showMember = true, grouped = false 
   const duration = getDurationString(flight.departure_datetime_utc, flight.arrival_datetime_utc);
 
   const colour = member?.colour ?? '#64748b';
+  const accentColour = isPast ? '#1A2235' : colour;
 
   return (
     <Link
       to={`/flights/${flight.id}`}
-      className={`block overflow-hidden active:scale-[0.99] transition-all ${grouped ? '' : 'rounded-xl'} ${isPast ? 'opacity-50' : 'bg-slate-800 hover:bg-slate-750'}`}
-      style={isPast ? { backgroundColor: '#1a2030' } : undefined}
+      className={`flex overflow-hidden active:scale-[0.99] transition-all duration-150 border ${
+        grouped ? 'rounded-none border-x-0 border-b-0' : 'rounded-xl shadow-card'
+      } ${isPast ? 'opacity-60' : 'hover:border-white/[.14]'}`}
+      style={{
+        backgroundColor: isPast ? '#0A0E18' : '#0E1525',
+        borderColor: grouped ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.07)',
+      }}
     >
-      {/* Colour accent bar */}
-      {!grouped && <div className="h-0.5" style={{ backgroundColor: isPast ? '#334155' : colour }} />}
+      {/* Left accent bar */}
+      {!grouped && (
+        <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: accentColour }} />
+      )}
 
-      <div className="p-4">
+      <div className="flex-1 p-4">
         {/* Top row: member + date */}
         {showMember && member ? (
-          <div className="flex items-center gap-2 mb-3">
-            <Avatar name={member.name} colour={isPast ? '#64748b' : colour} size="sm" />
-            <span className="text-xs text-slate-400 font-medium">{member.name}</span>
-            <span className="text-sm font-medium text-slate-300 ml-auto">{depDate}</span>
-            {isPast && <span className="text-[10px] bg-slate-700 text-slate-500 px-1.5 py-0.5 rounded ml-1">Completed</span>}
+          <div className="flex items-center gap-2 mb-3.5">
+            <Avatar name={member.name} colour={isPast ? '#334155' : colour} size="sm" />
+            <span className="text-[12px] text-slate-400 font-medium">{member.name}</span>
+            <span className="text-[12px] font-medium text-slate-400 ml-auto">{depDate}</span>
+            {isPast && (
+              <span className="text-[10px] font-semibold tracking-[0.04em] bg-slate-800 text-slate-600 px-2 py-0.5 rounded-md ml-1">
+                Done
+              </span>
+            )}
           </div>
         ) : (
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-medium text-slate-300">{depDate}</div>
-            {isPast && <span className="text-[10px] bg-slate-700 text-slate-500 px-1.5 py-0.5 rounded">Completed</span>}
+          <div className="flex items-center justify-between mb-3.5">
+            <div className="text-[12px] font-medium text-slate-400">{depDate}</div>
+            {isPast && (
+              <span className="text-[10px] font-semibold tracking-[0.04em] bg-slate-800 text-slate-600 px-2 py-0.5 rounded-md">
+                Done
+              </span>
+            )}
           </div>
         )}
 
-        {/* Route row */}
-        <div className="flex items-center gap-3">
+        {/* Route */}
+        <div className="flex items-center gap-2">
           {/* Departure */}
-          <div className="text-center min-w-0">
-            <div className="text-2xl font-bold text-white tabular-nums">{depTime}</div>
-            <div className="text-xs text-slate-400 font-mono mt-0.5">{flight.departure_airport_code}</div>
-            <div className="text-[10px] text-slate-500">{depAbbr}</div>
+          <div className="text-left min-w-0">
+            <div className="text-[28px] font-bold tracking-tightest text-white tabular-nums leading-none">
+              {depTime}
+            </div>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="font-mono text-[13px] font-semibold text-slate-200 tracking-wide">
+                {flight.departure_airport_code}
+              </span>
+              <span className="text-[10px] text-slate-600">{depAbbr}</span>
+            </div>
           </div>
 
           {/* Flight path */}
-          <div className="flex-1 flex flex-col items-center gap-1 min-w-0">
-            <div className="text-[10px] text-slate-500 truncate max-w-full text-center">
-              {flight.flight_number}
-            </div>
-            <div className="w-full flex items-center gap-1">
-              <div className="h-px flex-1 bg-slate-600" />
-              <svg className="w-4 h-4 text-slate-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+          <div className="flex-1 flex flex-col items-center gap-1 px-1 min-w-0">
+            <span className="text-[10px] text-slate-600 font-mono tracking-wide">{flight.flight_number}</span>
+            <div className="w-full flex items-center gap-1.5">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
+              <svg
+                className="w-[14px] h-[14px] flex-shrink-0"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style={{ color: isPast ? '#334155' : colour }}
+              >
                 <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
               </svg>
-              <div className="h-px flex-1 bg-slate-600" />
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
             </div>
             {duration && (
-              <div className="text-[10px] text-slate-500">{duration}</div>
+              <span className="text-[10px] text-slate-600">{duration}</span>
             )}
           </div>
 
           {/* Arrival */}
-          <div className="text-center min-w-0">
-            <div className="text-2xl font-bold text-white tabular-nums">{arrTime}</div>
-            <div className="text-xs text-slate-400 font-mono mt-0.5">{flight.arrival_airport_code}</div>
-            <div className="text-[10px] text-slate-500">{arrAbbr}</div>
+          <div className="text-right min-w-0">
+            <div className="text-[28px] font-bold tracking-tightest text-white tabular-nums leading-none">
+              {arrTime}
+            </div>
+            <div className="flex items-baseline gap-1 mt-1 justify-end">
+              <span className="font-mono text-[13px] font-semibold text-slate-200 tracking-wide">
+                {flight.arrival_airport_code}
+              </span>
+              <span className="text-[10px] text-slate-600">{arrAbbr}</span>
+            </div>
           </div>
         </div>
 
-        {/* Bottom row: airline + booking ref */}
-        <div className="flex items-center justify-between mt-3">
-          <span className="text-xs text-slate-400 truncate">
+        {/* Bottom row */}
+        <div className="flex items-center justify-between mt-3.5 pt-3 border-t border-white/[.05]">
+          <span className="text-[12px] text-slate-500 truncate">
             {flight.airline ?? flight.flight_number}
           </span>
           <div className="flex items-center gap-2">
             {flight.booking_reference && (
-              <span className="text-xs text-slate-500 font-mono">{flight.booking_reference}</span>
+              <span className="text-[11px] text-slate-600 font-mono tracking-wide">
+                {flight.booking_reference}
+              </span>
             )}
             {flight.ticket_pdf_url && (
-              <span className="text-[10px] bg-sky-900/60 text-sky-400 px-1.5 py-0.5 rounded">PDF</span>
+              <span className="text-[10px] font-semibold bg-cyan-400/10 text-cyan-400 px-2 py-0.5 rounded-md tracking-wide">
+                PDF
+              </span>
             )}
           </div>
         </div>
