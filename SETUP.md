@@ -57,10 +57,21 @@ FamilyFlights uses Supabase anonymous sessions to upload and download PDF ticket
 4. Copy all the text and paste it into the SQL Editor
 5. Click **Run**
 6. You should see "Success" — the database tables are now created
+7. Repeat steps 2–6 for **each** of the remaining migration files in order:
+   - `002_trips.sql`
+   - `003_hotels.sql`
+   - `004_documents.sql`
+   - `005_car_rentals.sql`
+   - `006_trip_documents.sql`
+   - `007_indexes.sql`
+   - `008_car_rentals_v2.sql`
+   - `009_v3_features.sql` ← **required for v3.0.0 boarding passes, loyalty cards, and notifications**
 
 ---
 
-## Step 4 — Create the storage bucket for PDF tickets
+## Step 4 — Create storage buckets
+
+### Tickets bucket (for flight PDF tickets)
 
 1. In Supabase, click **Storage** in the left sidebar
 2. Click **New bucket**
@@ -68,14 +79,22 @@ FamilyFlights uses Supabase anonymous sessions to upload and download PDF ticket
 4. Make sure **Public bucket** is turned **OFF** (private)
 5. Click **Save**
 
+### Boarding passes bucket (new in v3.0.0)
+
+1. Still in Storage, click **New bucket** again
+2. Name it exactly: `boarding-passes`
+3. Make sure **Public bucket** is turned **OFF** (private)
+4. Click **Save**
+
 ---
 
 ## Step 5 — Get your Supabase API keys
 
 1. In Supabase, click **Settings** → **API**
-2. You'll see two values — copy both and save them:
+2. You'll see several values — copy these and save them:
    - **Project URL** (looks like `https://xxxx.supabase.co`)
    - **anon/public key** (a long string starting with `eyJ...`)
+   - **service_role key** (another long string starting with `eyJ...`) — needed for push notifications
 
 ---
 
@@ -94,14 +113,29 @@ This powers the AI that reads your flight booking PDFs.
 
 ## Step 7 — (Optional) Get an AviationStack API key
 
-This lets you look up flight times by flight number when adding flights manually.
+This powers the live flight status feature on flight detail pages.
 
 1. Go to [aviationstack.com](https://aviationstack.com)
 2. Click **Sign Up Free**
 3. Copy your API key from the dashboard
-4. The free plan gives 100 lookups/month — plenty for family use
+4. The free plan gives 100 lookups/month — use the "Check live status" button only when needed
 
-If you skip this, you can still add flights manually by entering all details yourself.
+If you skip this, flights can still be added manually and the live status button will show an error.
+
+---
+
+## Step 7b — Generate VAPID keys for push notifications (new in v3.0.0)
+
+Push notifications (check-in reminders at 48h and 24h before departure) require VAPID keys.
+
+1. Open a terminal (or use any Node.js environment)
+2. Run: `npx web-push generate-vapid-keys`
+3. You'll get output like:
+   ```
+   Public Key: BExamplePublicKeyHere...
+   Private Key: ExamplePrivateKeyHere...
+   ```
+4. Save both keys — you'll need them in the next step
 
 ---
 
@@ -120,9 +154,20 @@ If you skip this, you can still add flights manually by entering all details you
 | `VITE_ANTHROPIC_API_KEY` | Your Anthropic key from Step 6 |
 | `VITE_AVIATIONSTACK_API_KEY` | Your AviationStack key from Step 7 (optional) |
 | `VITE_APP_PASSWORD` | The site password your family will use (default: `Axis@149`) |
+| `VITE_VAPID_PUBLIC_KEY` | The VAPID Public Key from Step 7b |
+| `VAPID_PRIVATE_KEY` | The VAPID Private Key from Step 7b |
+| `VAPID_EMAIL` | Your email address (e.g. `mailto:you@example.com`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | The service_role key from Step 5 |
+| `CRON_SECRET` | Any random string you choose (e.g. `my-secret-cron-key-123`) |
 
 5. Click **Deploy**
 6. Wait about 2 minutes — Vercel will give you a URL like `https://family-flights-xxx.vercel.app`
+
+> **Already deployed?** If you already have the app running and are updating to v3.0.0:
+> 1. Run `009_v3_features.sql` in Supabase SQL Editor
+> 2. Create the `boarding-passes` bucket in Supabase Storage
+> 3. Add the 5 new environment variables in Vercel (Settings → Environment Variables)
+> 4. Redeploy (Vercel → your project → Deployments → Redeploy)
 
 ---
 
@@ -190,6 +235,24 @@ Make sure your Anthropic API key is correct and you have billing credits. Also c
 
 **Flight times look wrong:**
 Times are displayed in the local timezone of each airport. Check that the IATA airport codes are correct (3-letter codes like BOM, DXB, LHR).
+
+**Boarding pass upload fails:**
+Make sure you ran `009_v3_features.sql` in Supabase and created the `boarding-passes` private storage bucket.
+
+**"relation boarding_passes does not exist" or similar database error:**
+Run `supabase/migrations/009_v3_features.sql` in the Supabase SQL Editor.
+
+**Live flight status says "API key not configured":**
+Add `VITE_AVIATIONSTACK_API_KEY` in Vercel Environment Variables and redeploy.
+
+**Push notifications not working:**
+1. Check that `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL`, and `SUPABASE_SERVICE_ROLE_KEY` are all set in Vercel
+2. On the Documents tab, scroll to the bottom to the Notifications section and assign your device to a family member
+3. Tap "Enable notifications" and allow when your browser asks
+4. Push notifications require HTTPS — they won't work on plain HTTP
+
+**Cron job (check-in reminders) not running:**
+Make sure `CRON_SECRET` is set in Vercel. The cron runs every hour and sends reminders at 48h and 24h before departure.
 
 ---
 
