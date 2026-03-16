@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import type { Flight, Trip, Hotel, CarRental, TripDocument, MemberDocument } from '@/types';
+import type { Flight, Trip, Hotel, CarRental, TripDocument, MemberDocument, BoardingPass, LoyaltyCard, FlightStatus } from '@/types';
 
 interface FamilyFlightsDB extends DBSchema {
   member_documents: {
@@ -43,13 +43,27 @@ interface FamilyFlightsDB extends DBSchema {
     key: string; // '{bucket}:{path}'
     value: { key: string; cachedAt: string };
   };
+  boarding_passes: {
+    key: string;
+    value: BoardingPass;
+    indexes: { 'by-flight': string };
+  };
+  loyalty_cards: {
+    key: string;
+    value: LoyaltyCard;
+    indexes: { 'by-member': string };
+  };
+  flight_statuses: {
+    key: string; // '{flightNumber}_{date}'
+    value: FlightStatus & { _key: string };
+  };
 }
 
 let db: IDBPDatabase<FamilyFlightsDB> | null = null;
 
 async function getDB(): Promise<IDBPDatabase<FamilyFlightsDB>> {
   if (db) return db;
-  db = await openDB<FamilyFlightsDB>('family-flights', 6, {
+  db = await openDB<FamilyFlightsDB>('family-flights', 7, {
     upgrade(database, oldVersion) {
       if (oldVersion < 1) {
         const flightStore = database.createObjectStore('flights', { keyPath: 'id' });
@@ -105,6 +119,19 @@ async function getDB(): Promise<IDBPDatabase<FamilyFlightsDB>> {
         if (!database.objectStoreNames.contains('car_rentals')) {
           const cr = database.createObjectStore('car_rentals', { keyPath: 'id' });
           cr.createIndex('by-trip', 'trip_id');
+        }
+      }
+      if (oldVersion < 7) {
+        if (!database.objectStoreNames.contains('boarding_passes')) {
+          const bp = database.createObjectStore('boarding_passes', { keyPath: 'id' });
+          bp.createIndex('by-flight', 'flight_id');
+        }
+        if (!database.objectStoreNames.contains('loyalty_cards')) {
+          const lc = database.createObjectStore('loyalty_cards', { keyPath: 'id' });
+          lc.createIndex('by-member', 'family_member_id');
+        }
+        if (!database.objectStoreNames.contains('flight_statuses')) {
+          database.createObjectStore('flight_statuses', { keyPath: '_key' });
         }
       }
     },
@@ -273,6 +300,67 @@ export async function getAllManifestedKeys(): Promise<string[]> {
   }
 }
 
+// ── Boarding Passes ────────────────────────────────────────────────────────────
+
+export async function cacheBoardingPasses(passes: BoardingPass[]): Promise<void> {
+  const database = await getDB();
+  const tx = database.transaction('boarding_passes', 'readwrite');
+  await Promise.all(passes.map(p => tx.store.put(p)));
+  await tx.done;
+}
+
+export async function getCachedBoardingPassForFlight(flightId: string): Promise<BoardingPass | undefined> {
+  const database = await getDB();
+  const all = await database.getAllFromIndex('boarding_passes', 'by-flight', flightId);
+  return all[0];
+}
+
+export async function deleteCachedBoardingPass(id: string): Promise<void> {
+  const database = await getDB();
+  await database.delete('boarding_passes', id);
+}
+
+// ── Loyalty Cards ──────────────────────────────────────────────────────────────
+
+export async function cacheLoyaltyCards(cards: LoyaltyCard[]): Promise<void> {
+  const database = await getDB();
+  const tx = database.transaction('loyalty_cards', 'readwrite');
+  await Promise.all(cards.map(c => tx.store.put(c)));
+  await tx.done;
+}
+
+export async function getCachedLoyaltyCardsForMember(memberId: string): Promise<LoyaltyCard[]> {
+  const database = await getDB();
+  return database.getAllFromIndex('loyalty_cards', 'by-member', memberId);
+}
+
+export async function getCachedAllLoyaltyCards(): Promise<LoyaltyCard[]> {
+  const database = await getDB();
+  return database.getAll('loyalty_cards');
+}
+
+export async function deleteCachedLoyaltyCard(id: string): Promise<void> {
+  const database = await getDB();
+  await database.delete('loyalty_cards', id);
+}
+
+// ── Flight Status Cache ────────────────────────────────────────────────────────
+
+export async function cacheFlightStatus(status: FlightStatus): Promise<void> {
+  const database = await getDB();
+  const key = `${status.flight_number}_${status.date}`;
+  await database.put('flight_statuses', { ...status, _key: key });
+}
+
+export async function getCachedFlightStatus(flightNumber: string, date: string): Promise<FlightStatus | undefined> {
+  const database = await getDB();
+  const key = `${flightNumber}_${date}`;
+  const record = await database.get('flight_statuses', key);
+  if (!record) return undefined;
+  const { _key, ...status } = record;
+  return status as FlightStatus;
+}
+
 // ── Clear all ──────────────────────────────────────────────────────────────────
 
 export async function clearAllCache(): Promise<void> {
@@ -286,5 +374,8 @@ export async function clearAllCache(): Promise<void> {
     database.clear('trip_documents'),
     database.clear('meta'),
     database.clear('cached_files'),
+    database.clear('boarding_passes'),
+    database.clear('loyalty_cards'),
+    database.clear('flight_statuses'),
   ]);
 }

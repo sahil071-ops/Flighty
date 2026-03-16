@@ -20,6 +20,8 @@ import { AddDocumentPage } from '@/pages/AddDocumentPage';
 import { DocumentDetailPage } from '@/pages/DocumentDetailPage';
 import { WhatsNewPage } from '@/pages/WhatsNewPage';
 import { HotelDetailPage } from '@/pages/HotelDetailPage';
+import { LoyaltyCardsPage } from '@/pages/LoyaltyCardsPage';
+import { AddLoyaltyCardPage } from '@/pages/AddLoyaltyCardPage';
 
 function AppRoutes() {
   const { isUnlocked } = useApp();
@@ -56,6 +58,10 @@ function AppRoutes() {
 
       {/* Car rentals */}
       <Route path="/car-rentals/:rentalId" element={<CarRentalDetailPage />} />
+
+      {/* Loyalty cards */}
+      <Route path="/loyalty-cards/add" element={<AddLoyaltyCardPage />} />
+      <Route path="/loyalty-cards/:memberId" element={<LoyaltyCardsPage />} />
 
       {/* Version history */}
       <Route path="/whats-new" element={<WhatsNewPage />} />

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useOffline } from '@/context/OfflineContext';
 import { supabase } from '@/lib/supabase';
-import { getCachedFlight, deleteCachedFlight, cacheFlights } from '@/lib/db';
+import { getCachedFlight, deleteCachedFlight, cacheFlights, getCachedBoardingPassForFlight, cacheBoardingPasses } from '@/lib/db';
 import { getMember } from '@/data/members';
 import { Layout } from '@/components/layout/Layout';
 import { Avatar } from '@/components/ui/Avatar';
@@ -11,13 +11,39 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { downloadICS } from '@/lib/icsGenerator';
 import { isPDFCached, openPDFBlob, downloadPDF } from '@/lib/pdfCache';
+import { BoardingPassSection } from '@/components/flights/BoardingPassSection';
+import { FlightStatusSection } from '@/components/flights/FlightStatusSection';
+import { LoyaltyCardSection } from '@/components/loyalty/LoyaltyCardSection';
+import { getCachedStatus } from '@/lib/flightStatus';
 import {
   formatLocalTime,
   formatLocalDate,
   getTimezoneAbbr,
   getDurationString,
 } from '@/lib/timezone';
-import type { Flight } from '@/types';
+import type { Flight, BoardingPass, FlightStatus } from '@/types';
+
+// Check-in URL table
+const CHECK_IN_URLS: Record<string, string> = {
+  'BA':'https://www.britishairways.com/travel/olcilandingpageauthreq/public/en_gb',
+  'EK':'https://www.emirates.com/english/manage-booking/online-check-in/',
+  'AI':'https://www.airindia.com/check-in.htm',
+  'UK':'https://www.airvistara.com/in/en/check-in',
+  '6E':'https://www.indigo.in/flight-booking/check-in-online',
+  'SG':'https://www.spicejet.com/check-in',
+  'LH':'https://www.lufthansa.com/in/en/online-check-in',
+  'EY':'https://www.etihad.com/en-in/manage/check-in',
+  'QR':'https://www.qatarairways.com/en-in/check-in.html',
+  'SQ':'https://www.singaporeair.com/en_UK/us/travel-info/check-in/online-check-in/',
+  'TK':'https://www.turkishairlines.com/en-int/flights/manage-booking/check-in/',
+  'LX':'https://www.swiss.com/in/en/prepare/checkin',
+  'AF':'https://wwws.airfrance.in/en/check-in',
+  'KL':'https://www.klm.com/en/check-in',
+  'AA':'https://www.aa.com/checkin',
+  'UA':'https://www.united.com/en/us/checkin',
+  'DL':'https://www.delta.com/us/en/check-in/overview',
+  'G8':'https://www.goair.in/manage-booking/web-check-in',
+};
 
 function DetailRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
@@ -40,6 +66,9 @@ export function FlightDetailPage() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [boardingPass, setBoardingPass] = useState<BoardingPass | null>(null);
+  const [initialStatus, setInitialStatus] = useState<FlightStatus | null>(null);
+  const [bookingRefCopied, setBookingRefCopied] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -72,7 +101,23 @@ export function FlightDetailPage() {
     if (flight?.ticket_pdf_url) {
       isPDFCached(flight.ticket_pdf_url).then(setPdfCached);
     }
-  }, [flight?.ticket_pdf_url]);
+    if (flight) {
+      // Load boarding pass
+      getCachedBoardingPassForFlight(flight.id).then(bp => setBoardingPass(bp ?? null));
+      if (isOnline) {
+        supabase.from('boarding_passes').select('*').eq('flight_id', flight.id).maybeSingle()
+          .then(({ data }) => {
+            if (data) {
+              setBoardingPass(data as BoardingPass);
+              cacheBoardingPasses([data as BoardingPass]);
+            }
+          });
+      }
+      // Load cached flight status
+      const date = flight.departure_datetime_utc.slice(0, 10);
+      getCachedStatus(flight.flight_number, date).then(s => setInitialStatus(s));
+    }
+  }, [flight?.id]);
 
   async function handleViewTicket() {
     if (!flight?.ticket_pdf_url) return;
@@ -139,6 +184,25 @@ export function FlightDetailPage() {
 
     const url = `https://wa.me/?text=${encodeURIComponent(lines)}`;
     window.open(url, '_blank');
+  }
+
+  function handleCheckIn() {
+    if (!flight) return;
+    const iata = flight.flight_number.slice(0, 2).toUpperCase();
+    const url = CHECK_IN_URLS[iata];
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${flight.airline ?? flight.flight_number} online check-in`)}`;
+      window.open(searchUrl, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  async function copyBookingRef() {
+    if (!flight?.booking_reference) return;
+    await navigator.clipboard.writeText(flight.booking_reference);
+    setBookingRefCopied(true);
+    setTimeout(() => setBookingRefCopied(false), 2000);
   }
 
   const member = flight ? getMember(flight.family_member_id) : undefined;
@@ -236,9 +300,58 @@ export function FlightDetailPage() {
           <DetailRow label="Arrival airport" value={flight.arrival_airport_name ?? flight.arrival_airport_code} />
           <DetailRow label="Arrival terminal" value={flight.terminal_arrival} />
           <DetailRow label="Seat" value={flight.seat} />
-          <DetailRow label="Booking reference" value={flight.booking_reference} />
+
+          {/* Booking reference with copy button */}
+          {flight.booking_reference && (
+            <div className="flex justify-between items-center py-3 border-b border-slate-800 last:border-0">
+              <span className="text-sm text-slate-500 flex-shrink-0">Booking reference</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-white font-medium font-mono">{flight.booking_reference}</span>
+                <button
+                  onClick={copyBookingRef}
+                  className="text-slate-500 hover:text-sky-400 transition-colors"
+                  title="Copy reference"
+                >
+                  {bookingRefCopied ? (
+                    <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
           <DetailRow label="Price" value={flight.price} />
         </div>
+
+        {/* Check-in button */}
+        <button
+          onClick={handleCheckIn}
+          className="w-full flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-semibold rounded-xl py-3 mb-5 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Check in online
+        </button>
+
+        {/* Boarding pass */}
+        <BoardingPassSection
+          flight={flight}
+          boardingPass={boardingPass}
+          onUpdate={setBoardingPass}
+        />
+
+        {/* Live flight status */}
+        <FlightStatusSection flight={flight} initialStatus={initialStatus} />
+
+        {/* Loyalty cards */}
+        <LoyaltyCardSection flight={flight} />
 
         {/* Ticket PDF */}
         {flight.ticket_pdf_url && (
@@ -306,13 +419,13 @@ export function FlightDetailPage() {
                 Edit flight
               </Link>
               <Button
-                  variant="danger"
-                  className="w-full"
-                  onClick={handleDelete}
-                  loading={deleting}
-                >
-                  Delete flight
-                </Button>
+                variant="danger"
+                className="w-full"
+                onClick={handleDelete}
+                loading={deleting}
+              >
+                Delete flight
+              </Button>
             </>
           )}
         </div>

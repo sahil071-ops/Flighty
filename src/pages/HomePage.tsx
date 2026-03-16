@@ -5,6 +5,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { ThisWeekBanner } from '@/components/trips/ThisWeekBanner';
 import { ExpiryWarningBanner } from '@/components/documents/ExpiryWarningBanner';
+import { FlyingNowCard } from '@/components/home/FlyingNowCard';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { SyncIndicator } from '@/components/ui/SyncIndicator';
@@ -75,6 +76,7 @@ export function HomePage() {
       <main className="flex-1 px-4 py-6" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
         {tab === 'members' && (
           <div className="flex flex-col gap-4">
+            <FlyingNowCard />
             <ThisWeekBanner />
             <ExpiryWarningBanner />
             <div>
