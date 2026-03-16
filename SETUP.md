@@ -128,14 +128,11 @@ If you skip this, flights can still be added manually and the live status button
 
 Push notifications (check-in reminders at 48h and 24h before departure) require VAPID keys.
 
-1. Open a terminal (or use any Node.js environment)
-2. Run: `npx web-push generate-vapid-keys`
-3. You'll get output like:
-   ```
-   Public Key: BExamplePublicKeyHere...
-   Private Key: ExamplePrivateKeyHere...
-   ```
-4. Save both keys — you'll need them in the next step
+1. Open [vapidkeys.com](https://vapidkeys.com) in your browser
+2. Click **Generate**
+3. You'll see a **Public Key** and a **Private Key** — copy both and save them somewhere safe (like Notes)
+4. For the **VAPID Email**, use your own email address in this format: `mailto:you@example.com`
+   - This is just a contact address included in push requests so browser services can identify you — you won't receive any emails from it
 
 ---
 
