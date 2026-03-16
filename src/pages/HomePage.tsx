@@ -26,80 +26,92 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
       <OfflineBanner />
+
+      {/* Header */}
       <header
-        className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800"
+        className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-xl border-b border-white/[.06]"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="flex items-center justify-between px-4 h-14">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-            </svg>
-            <h1 className="text-lg font-semibold text-white">FamilyFlights</h1>
+          <div className="flex items-center gap-2.5">
+            {/* Plane icon */}
+            <div className="w-7 h-7 rounded-lg bg-cyan-400/10 flex items-center justify-center">
+              <svg className="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+              </svg>
+            </div>
+            <h1 className="text-[15px] font-semibold tracking-tight text-white">FamilyFlights</h1>
           </div>
           <button
             onClick={() => lock()}
-            className="text-slate-500 hover:text-slate-300 transition-colors p-2 -mr-2"
+            className="text-slate-600 hover:text-slate-300 transition-colors p-2 -mr-2"
             aria-label="Lock app"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </button>
         </div>
 
         {/* Tab bar */}
-        <div className="flex border-b border-slate-800">
-          <button
-            onClick={() => setTab('members')}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors border-b-2 ${
-              tab === 'members'
-                ? 'border-sky-500 text-sky-400'
-                : 'border-transparent text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            Members
-          </button>
-          <button
-            onClick={() => setTab('calendar')}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors border-b-2 ${
-              tab === 'calendar'
-                ? 'border-sky-500 text-sky-400'
-                : 'border-transparent text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            Calendar
-          </button>
+        <div className="flex px-4 gap-0 border-b border-white/[.06]">
+          {(['members', 'calendar'] as Tab[]).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`relative py-2.5 px-1 mr-6 text-[13px] font-medium transition-colors ${
+                tab === t ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+              {tab === t && (
+                <span className="absolute bottom-0 left-0 right-0 h-px bg-cyan-400 rounded-full" />
+              )}
+            </button>
+          ))}
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-6" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
+      <main className="flex-1 px-4 py-5" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
         {tab === 'members' && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5">
             <FlyingNowCard />
             <ThisWeekBanner />
             <ExpiryWarningBanner />
+
+            {/* Member grid */}
             <div>
-              <p className="text-sm text-slate-400 mb-5 text-center">Who are you?</p>
-              <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+              <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-slate-600 mb-4 text-center">
+                Who are you?
+              </p>
+              <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
                 {FAMILY_MEMBERS.map(member => (
                   <button
                     key={member.id}
                     onClick={() => selectMember(member)}
-                    className="flex flex-col items-center gap-3 bg-slate-800 rounded-2xl p-5 active:scale-95 transition-all border border-slate-700 hover:border-slate-500"
+                    className="flex flex-col items-center gap-3 rounded-2xl p-5 active:scale-95 transition-all duration-150 border relative overflow-hidden"
+                    style={{
+                      backgroundColor: `${member.colour}0A`,
+                      borderColor: `${member.colour}28`,
+                    }}
                   >
-                    <Avatar name={member.name} colour={member.colour} size="lg" />
-                    <span className="text-sm font-medium text-white">{member.name}</span>
+                    {/* Subtle top glow line */}
+                    <div
+                      className="absolute top-0 left-0 right-0 h-px"
+                      style={{ backgroundColor: `${member.colour}50` }}
+                    />
+                    <Avatar name={member.name} colour={member.colour} size="xl" />
+                    <span className="text-[13px] font-semibold tracking-tight text-white">
+                      {member.name}
+                    </span>
                   </button>
                 ))}
               </div>
             </div>
-            <button
-              onClick={() => navigate('/whats-new')}
-              className="text-center mt-2"
-            >
-              <span className="text-xs text-slate-600 hover:text-slate-400 transition-colors">
-                FamilyFlights v{VERSION}
+
+            <button onClick={() => navigate('/whats-new')} className="text-center mt-1">
+              <span className="text-[11px] text-slate-700 hover:text-slate-500 transition-colors tracking-wide">
+                v{VERSION}
               </span>
             </button>
           </div>

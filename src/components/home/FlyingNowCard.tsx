@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { getCachedFlights } from '@/lib/db';
 import { useOffline } from '@/context/OfflineContext';
-import { getMember, FAMILY_MEMBERS } from '@/data/members';
+import { getMember } from '@/data/members';
 import { fetchFlightStatus, statusLabel, statusColor, cacheAgeMinutes as calcAge } from '@/lib/flightStatus';
 import { getCachedFlightStatus } from '@/lib/db';
 import { formatLocalTime, getTimezoneAbbr } from '@/lib/timezone';
@@ -16,7 +16,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import type { Flight, FlightStatus } from '@/types';
 
 interface FlightGroup {
-  key: string; // flightNumber_date
+  key: string;
   flightNumber: string;
   airline: string | null;
   departureCode: string;
@@ -79,7 +79,7 @@ export function FlyingNowCard() {
 
   useEffect(() => {
     loadFlights();
-    const interval = setInterval(loadFlights, 60000); // Re-check every minute
+    const interval = setInterval(loadFlights, 60000);
     return () => clearInterval(interval);
   }, [isOnline]);
 
@@ -94,7 +94,6 @@ export function FlyingNowCard() {
       }
 
       const now = Date.now();
-      // Filter: departing within -30min to +3hr window
       const relevant = flights.filter(f => {
         const depMs = new Date(f.departure_datetime_utc).getTime();
         const diffMin = (depMs - now) / 60000;
@@ -104,7 +103,6 @@ export function FlyingNowCard() {
       const grouped = groupFlights(relevant);
       setGroups(grouped);
 
-      // Load cached statuses
       const statuses: Record<string, FlightStatus> = {};
       for (const g of grouped) {
         const date = g.departureDatetimeUtc.slice(0, 10);
@@ -113,7 +111,7 @@ export function FlyingNowCard() {
       }
       setStatusMap(statuses);
     } catch {
-      // Non-critical — card just won't show
+      // Non-critical
     }
   }
 
@@ -131,7 +129,7 @@ export function FlyingNowCard() {
   if (groups.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-3 mb-2">
+    <div className="flex flex-col gap-3">
       {groups.map(group => {
         const minsUntil = minutesUntilDeparture(group.departureDatetimeUtc);
         const depTime = formatLocalTime(group.departureDatetimeUtc, group.departureTimezone);
@@ -139,38 +137,41 @@ export function FlyingNowCard() {
         const flightStatus = statusMap[group.key];
         const gateFromStatus = flightStatus?.departure_gate;
         const isRefreshing = refreshing === group.key;
+        const isDeparted = minsUntil <= 0;
 
         return (
           <div
             key={group.key}
-            className="bg-gradient-to-r from-sky-900/80 to-slate-800 border border-sky-700/60 rounded-2xl overflow-hidden"
+            className="rounded-2xl overflow-hidden border border-cyan-400/20"
+            style={{ backgroundColor: '#091420' }}
           >
-            <div className="h-0.5 bg-gradient-to-r from-sky-400 to-sky-600" />
+            {/* Top accent line */}
+            <div className="h-px bg-gradient-to-r from-cyan-400/60 via-cyan-400/30 to-transparent" />
+
             <div className="p-4">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-3">
+              {/* Header row */}
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
                   </svg>
-                  <span className="text-xs font-semibold text-sky-400 uppercase tracking-wide">Flying Now</span>
+                  <span className="text-[10px] font-bold text-cyan-400 tracking-[0.1em] uppercase">
+                    Flying Now
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-sky-300">
+                <div className="flex items-center gap-3">
+                  <span className={`text-[13px] font-bold tabular-nums ${isDeparted ? 'text-slate-500' : 'text-white'}`}>
                     {formatCountdown(minsUntil)}
                   </span>
                   {isOnline && (
                     <button
                       onClick={e => { e.stopPropagation(); handleRefreshStatus(group); }}
                       disabled={isRefreshing}
-                      className="text-slate-500 hover:text-sky-400 transition-colors"
+                      className="text-slate-600 hover:text-cyan-400 transition-colors disabled:opacity-40"
                     >
                       <svg
-                        className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-sky-400' : ''}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
+                        className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-cyan-400' : ''}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                       </svg>
@@ -179,43 +180,54 @@ export function FlyingNowCard() {
                 </div>
               </div>
 
-              {/* Clickable flight info */}
+              {/* Clickable flight body */}
               <button
                 className="w-full text-left"
                 onClick={() => navigate(`/flights/${group.representativeFlightId}`)}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <span className="text-2xl font-bold text-white">{group.departureCode}</span>
-                    <span className="text-slate-400 mx-3">→</span>
-                    <span className="text-2xl font-bold text-white">{group.arrivalCode}</span>
+                {/* Route + time */}
+                <div className="flex items-end justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[32px] font-bold tracking-tight text-white leading-none">
+                      {group.departureCode}
+                    </span>
+                    <svg className="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
+                    </svg>
+                    <span className="font-mono text-[32px] font-bold tracking-tight text-white leading-none">
+                      {group.arrivalCode}
+                    </span>
                   </div>
                   <div className="text-right">
-                    <div className="text-base font-bold text-white">{depTime} <span className="text-xs text-slate-400">{depAbbr}</span></div>
-                    <div className="text-xs text-slate-400">{group.flightNumber}</div>
+                    <div className="text-[18px] font-bold text-white tabular-nums leading-none">
+                      {depTime}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">{depAbbr} · {group.flightNumber}</div>
                   </div>
                 </div>
 
                 {/* Gate + status */}
-                <div className="flex items-center gap-3 mb-3">
-                  {gateFromStatus && (
-                    <span className="text-sm font-bold text-white bg-slate-700 px-2 py-0.5 rounded">
-                      Gate {gateFromStatus}
-                    </span>
-                  )}
-                  {flightStatus && (
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusColor(flightStatus.status)}`}>
-                      {statusLabel(flightStatus.status)}
-                    </span>
-                  )}
-                  {flightStatus && (
-                    <span className="text-[10px] text-slate-600 ml-auto">
-                      {calcAge(flightStatus)}m ago
-                    </span>
-                  )}
-                </div>
+                {(gateFromStatus || flightStatus) && (
+                  <div className="flex items-center gap-2 mb-3">
+                    {gateFromStatus && (
+                      <span className="text-[12px] font-bold text-white bg-slate-800 border border-white/[.08] px-2.5 py-1 rounded-lg">
+                        Gate {gateFromStatus}
+                      </span>
+                    )}
+                    {flightStatus && (
+                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${statusColor(flightStatus.status)}`}>
+                        {statusLabel(flightStatus.status)}
+                      </span>
+                    )}
+                    {flightStatus && (
+                      <span className="text-[10px] text-slate-700 ml-auto">
+                        {calcAge(flightStatus)}m ago
+                      </span>
+                    )}
+                  </div>
+                )}
 
-                {/* Member dots */}
+                {/* Member avatars */}
                 <div className="flex items-center gap-1.5">
                   {group.memberIds.map(id => {
                     const m = getMember(id);
