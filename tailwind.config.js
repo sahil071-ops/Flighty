@@ -8,8 +8,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        // All slate values reference CSS variables — switching html.dark <-> html.light
-        // automatically re-themes every component that uses bg-slate-*, text-slate-*, border-slate-*
+        // Entire slate palette driven by CSS variables.
+        // Swapping html.dark ↔ html.light re-themes every component automatically.
         slate: {
           950: 'rgb(var(--s-950) / <alpha-value>)',
           900: 'rgb(var(--s-900) / <alpha-value>)',
@@ -41,7 +41,8 @@ export default {
         tightest: '-0.04em',
       },
       boxShadow: {
-        card: '0 2px 20px rgba(0,0,0,0.18)',
+        // Used by cards — meaningful shadow in light mode, invisible in dark
+        card: '0 1px 6px rgba(0,15,50,0.07), 0 0 0 1px rgba(0,15,50,0.05)',
         'card-dark': '0 2px 20px rgba(0,0,0,0.5)',
         glow: '0 0 20px rgba(34,211,238,0.15)',
       },

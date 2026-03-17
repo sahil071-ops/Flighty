@@ -33,8 +33,7 @@ export function HotelCard({ hotel, member, showMember = true }: HotelCardProps) 
     return (
       <Link
         to={`/hotels/${hotel.id}`}
-        className="flex items-center gap-3 py-2.5 px-3 rounded-xl border border-white/[.04] active:opacity-60 transition-opacity"
-        style={{ backgroundColor: 'rgba(14,21,37,0.5)' }}
+        className="flex items-center gap-3 py-2.5 px-3 rounded-xl border dark:border-white/[.05] border-black/[.05] dark:bg-slate-900/60 bg-black/[.03] active:opacity-60 transition-opacity"
       >
         {/* Hotel icon dot */}
         <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 opacity-30" style={{ backgroundColor: colour }} />
@@ -64,8 +63,7 @@ export function HotelCard({ hotel, member, showMember = true }: HotelCardProps) 
   return (
     <Link
       to={`/hotels/${hotel.id}`}
-      className="flex rounded-xl overflow-hidden border border-white/[.07] hover:border-white/[.13] active:scale-[0.99] transition-all shadow-card"
-      style={{ backgroundColor: '#0E1525' }}
+      className="flex rounded-xl overflow-hidden border dark:border-white/[.07] border-black/[.07] dark:hover:border-white/[.13] hover:border-black/[.13] active:scale-[0.99] transition-all shadow-card bg-slate-800"
     >
       {/* Left accent */}
       <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: colour }} />
@@ -93,7 +91,7 @@ export function HotelCard({ hotel, member, showMember = true }: HotelCardProps) 
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/[.05] text-[12px] text-slate-500">
+        <div className="flex items-center gap-3 mt-3 pt-3 border-t dark:border-white/[.05] border-black/[.05] text-[12px] text-slate-500">
           {hotel.check_in_time && <span>Check-in {hotel.check_in_time}</span>}
           {hotel.room_type && <span className="truncate">{hotel.room_type}</span>}
           {hotel.confirmation_number && (

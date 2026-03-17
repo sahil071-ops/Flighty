@@ -19,11 +19,29 @@ export function HomePage() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('members');
+  // bump this to force Avatar to re-read localStorage after a photo change
+  const [photoVersion, setPhotoVersion] = useState(0);
 
   function selectMember(member: typeof FAMILY_MEMBERS[0]) {
     setCurrentMember(member);
     navigate(`/member/${member.id}`);
   }
+
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>, memberId: string) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const dataUrl = ev.target?.result as string;
+      localStorage.setItem(`ff_photo_${memberId}`, dataUrl);
+      setPhotoVersion(v => v + 1);
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  }
+
+  const isDark = theme === 'dark';
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
@@ -31,7 +49,7 @@ export function HomePage() {
 
       {/* Header */}
       <header
-        className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-xl border-b border-white/[.06]"
+        className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-xl border-b dark:border-white/[.06] border-black/[.07]"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="flex items-center justify-between px-4 h-14">
@@ -48,16 +66,14 @@ export function HomePage() {
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="text-slate-600 hover:text-slate-300 transition-colors p-2"
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="text-slate-400 hover:text-slate-200 transition-colors p-2"
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {theme === 'dark' ? (
-                /* Sun icon */
+              {isDark ? (
                 <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
                 </svg>
               ) : (
-                /* Moon icon */
                 <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
                 </svg>
@@ -67,7 +83,7 @@ export function HomePage() {
             {/* Lock */}
             <button
               onClick={() => lock()}
-              className="text-slate-600 hover:text-slate-300 transition-colors p-2 -mr-2"
+              className="text-slate-400 hover:text-slate-200 transition-colors p-2 -mr-2"
               aria-label="Lock app"
             >
               <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -78,7 +94,7 @@ export function HomePage() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex px-4 border-b border-white/[.06]">
+        <div className="flex px-4 border-b dark:border-white/[.06] border-black/[.07]">
           {(['members', 'calendar'] as Tab[]).map(t => (
             <button
               key={t}
@@ -105,43 +121,75 @@ export function HomePage() {
 
             {/* Member grid */}
             <div>
-              <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-slate-600 mb-4 text-center">
+              <p className="text-[11px] font-semibold tracking-[0.08em] uppercase text-slate-500 mb-4 text-center">
                 Who are you?
               </p>
               <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
                 {FAMILY_MEMBERS.map(member => (
                   <div key={member.id} className="relative">
+                    {/* Navigation button — full card */}
                     <button
                       onClick={() => selectMember(member)}
-                      className="w-full flex flex-col items-center gap-3 rounded-2xl p-5 active:scale-95 transition-all duration-150 border relative overflow-hidden"
-                      style={{
-                        backgroundColor: `${member.colour}0A`,
-                        borderColor: `${member.colour}28`,
+                      className="w-full flex flex-col items-center gap-3 rounded-2xl overflow-hidden active:scale-95 transition-all duration-150"
+                      style={isDark ? {
+                        backgroundColor: `${member.colour}12`,
+                        border: `1px solid ${member.colour}35`,
+                      } : {
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid rgba(0,15,50,0.07)',
+                        boxShadow: '0 1px 8px rgba(0,15,50,0.07)',
                       }}
                     >
-                      {/* Top glow line */}
-                      <div className="absolute top-0 left-0 right-0 h-px" style={{ backgroundColor: `${member.colour}50` }} />
-                      <Avatar
-                        name={member.name}
-                        colour={member.colour}
-                        size="xl"
-                        memberId={member.id}
-                        editable
+                      {/* Dark mode: subtle glow line at top; Light mode: bold colour bar */}
+                      <div
+                        className="absolute top-0 left-0 right-0"
+                        style={isDark
+                          ? { height: '1px', backgroundColor: `${member.colour}55` }
+                          : { height: '3px', backgroundColor: member.colour }
+                        }
                       />
-                      <span className="text-[13px] font-semibold tracking-tight text-white">
-                        {member.name}
-                      </span>
+                      <div className="flex flex-col items-center gap-3 pt-6 pb-5 px-5 w-full">
+                        {/* Key includes photoVersion so Avatar re-mounts and re-reads localStorage */}
+                        <Avatar
+                          key={`${member.id}-${photoVersion}`}
+                          name={member.name}
+                          colour={member.colour}
+                          size="xl"
+                          memberId={member.id}
+                        />
+                        <span className="text-[13px] font-semibold tracking-tight text-white">
+                          {member.name}
+                        </span>
+                      </div>
                     </button>
+
+                    {/* Camera button — completely separate from navigation, stops propagation */}
+                    <label
+                      htmlFor={`photo-${member.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer z-10 transition-opacity"
+                      style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}
+                      title="Change photo"
+                    >
+                      <svg className="w-3.5 h-3.5" style={{ color: '#fff' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </label>
+                    <input
+                      id={`photo-${member.id}`}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handlePhotoChange(e, member.id)}
+                    />
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-slate-700 text-center mt-3">
-                Tap your photo to change it
-              </p>
             </div>
 
             <button onClick={() => navigate('/whats-new')} className="text-center mt-1">
-              <span className="text-[11px] text-slate-700 hover:text-slate-500 transition-colors tracking-wide">
+              <span className="text-[11px] text-slate-500 hover:text-slate-400 transition-colors tracking-wide">
                 v{VERSION}
               </span>
             </button>

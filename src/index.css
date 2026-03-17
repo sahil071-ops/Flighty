@@ -4,7 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Dark mode palette (default) ──────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE — deep blue-black "Obsidian"
+═══════════════════════════════════════════════════════════ */
 html.dark, html:not(.light) {
   --s-950:  4   5   12;
   --s-900:  7   9   15;
@@ -25,28 +27,35 @@ html.dark, html:not(.light) {
   color-scheme: dark;
 }
 
-/* ─── Light mode palette ────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   LIGHT MODE — clean "Paper" aesthetic
+   Cool white base, ink text, visible borders, strong hierarchy
+═══════════════════════════════════════════════════════════ */
 html.light {
-  --s-950:  7   9   15;
-  --s-900:  245 247 252;   /* page background */
-  --s-850:  238 241 250;
-  --s-800:  255 255 255;   /* card surface = white */
-  --s-750:  249 250 255;
-  --s-700:  218 226 242;   /* borders */
-  --s-650:  198 210 232;
-  --s-600:  170 186 215;
-  --s-500:  100 116 139;   /* muted text */
-  --s-400:  71  85  105;   /* secondary text */
-  --s-300:  51  65  85;
-  --s-200:  30  41  59;
-  --s-100:  15  23  42;    /* primary text */
-  --s-50:   7   9   15;
+  /* Backgrounds: page → card → raised */
+  --s-950:  240 245 252;
+  --s-900:  238 242 250;   /* #EEF2FA — page background */
+  --s-850:  231 237 248;
+  --s-800:  255 255 255;   /* #FFFFFF — card surface */
+  --s-750:  247 249 254;
+  --s-700:  213 221 238;   /* borders */
+  --s-650:  192 204 226;
+  --s-600:  165 181 210;
+  /* Text: muted → secondary → primary */
+  --s-500:  126 143 167;   /* muted labels */
+  --s-400:  84  103 131;   /* secondary text */
+  --s-300:  52  69  97;
+  --s-200:  28  44  72;
+  --s-100:  10  20  45;    /* #0A142D — primary ink */
+  --s-50:   5   10  25;
 
-  --page-bg: #F5F7FC;
+  --page-bg: #EEF2FA;
   color-scheme: light;
 }
 
-/* ─── Base ──────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   BASE STYLES
+═══════════════════════════════════════════════════════════ */
 html {
   background-color: var(--page-bg, #07090F);
   scroll-behavior: smooth;
@@ -62,28 +71,49 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* In light mode, text-white means "primary content" so make it dark */
+/* ═══════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+═══════════════════════════════════════════════════════════ */
+
+/* text-white on cards/content becomes ink in light mode */
 html.light .text-white {
   color: rgb(var(--s-100));
 }
 
-/* Remove tap highlight */
-* {
-  -webkit-tap-highlight-color: transparent;
+/* Avatar initials must always be white regardless of mode */
+html.light .avatar-initials {
+  color: #ffffff !important;
 }
 
-/* Scrollbar */
+/* Cards get a real shadow in light mode instead of relying on border */
+html.light .lm-card {
+  box-shadow: 0 1px 6px rgba(0, 15, 50, 0.07), 0 0 0 1px rgba(0, 15, 50, 0.05);
+}
+
+/* Semantic colour blocks: dark red/blue/amber become light tints */
+html.light .dark-red-block {
+  background-color: rgb(254 242 242);
+  border-color: rgb(252 165 165);
+}
+html.light .dark-red-block .dark-red-text { color: rgb(153 27 27); }
+
+html.light .dark-sky-block {
+  background-color: rgb(240 249 255);
+  border-color: rgb(125 211 252);
+}
+html.light .dark-sky-block p,
+html.light .dark-sky-block span { color: rgb(7 89 133); }
+
+/* ═══════════════════════════════════════════════════════════
+   MISC UTILITIES
+═══════════════════════════════════════════════════════════ */
+* { -webkit-tap-highlight-color: transparent; }
+
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.2); border-radius: 2px; }
 
-/* Date/time inputs */
 input[type="date"],
-input[type="time"] {
-  color-scheme: inherit;
-}
+input[type="time"] { color-scheme: inherit; }
 
-/* Tabular numbers for times */
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
-}
+.tabular-nums { font-variant-numeric: tabular-nums; }
