@@ -329,31 +329,7 @@ export function FlightDetailPage() {
           <DetailRow label="Price" value={flight.price} />
         </div>
 
-        {/* Check-in button */}
-        <button
-          onClick={handleCheckIn}
-          className="w-full flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-semibold rounded-xl py-3 mb-5 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Check in online
-        </button>
-
-        {/* Boarding pass */}
-        <BoardingPassSection
-          flight={flight}
-          boardingPass={boardingPass}
-          onUpdate={setBoardingPass}
-        />
-
-        {/* Live flight status */}
-        <FlightStatusSection flight={flight} initialStatus={initialStatus} />
-
-        {/* Loyalty cards */}
-        <LoyaltyCardSection flight={flight} />
-
-        {/* Ticket PDF */}
+        {/* Ticket PDF — above check-in so you can see it first */}
         {flight.ticket_pdf_url && (
           <div className="bg-slate-800 rounded-xl p-4 mb-5">
             <div className="flex items-center justify-between mb-3">
@@ -375,6 +351,30 @@ export function FlightDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Check-in button */}
+        <button
+          onClick={handleCheckIn}
+          className="w-full flex items-center justify-center gap-2 bg-cyan-400 hover:bg-cyan-300 active:bg-cyan-500 text-black font-semibold rounded-xl py-3 mb-5 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Check in online
+        </button>
+
+        {/* Boarding pass */}
+        <BoardingPassSection
+          flight={flight}
+          boardingPass={boardingPass}
+          onUpdate={setBoardingPass}
+        />
+
+        {/* Live flight status */}
+        <FlightStatusSection flight={flight} initialStatus={initialStatus} />
+
+        {/* Loyalty cards */}
+        <LoyaltyCardSection flight={flight} />
 
         {error && (
           <div className="bg-red-900/40 border border-red-700 rounded-xl p-4 text-sm text-red-300 mb-5">

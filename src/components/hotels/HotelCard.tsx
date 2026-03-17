@@ -28,29 +28,63 @@ export function HotelCard({ hotel, member, showMember = true }: HotelCardProps) 
   const today = new Date().toISOString().slice(0, 10);
   const isPast = hotel.check_out_date < today;
 
+  // ─── Collapsed past card ──────────────────────────────────────────────────
+  if (isPast) {
+    return (
+      <Link
+        to={`/hotels/${hotel.id}`}
+        className="flex items-center gap-3 py-2.5 px-3 rounded-xl border border-white/[.04] active:opacity-60 transition-opacity"
+        style={{ backgroundColor: 'rgba(14,21,37,0.5)' }}
+      >
+        {/* Hotel icon dot */}
+        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 opacity-30" style={{ backgroundColor: colour }} />
+
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <span className="text-[12px] text-slate-600 line-through truncate">
+            {hotel.hotel_name}
+          </span>
+          {location && (
+            <span className="text-[11px] text-slate-700 line-through hidden sm:inline">{location}</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-[10px] text-slate-700">
+            {fmtDate(hotel.check_in_date)} – {fmtDate(hotel.check_out_date)}
+          </span>
+          {showMember && member && (
+            <Avatar name={member.name} colour="#334155" size="xs" />
+          )}
+        </div>
+      </Link>
+    );
+  }
+
+  // ─── Full active card ─────────────────────────────────────────────────────
   return (
     <Link
       to={`/hotels/${hotel.id}`}
-      className={`block rounded-xl overflow-hidden border active:scale-[0.99] transition-transform ${isPast ? 'opacity-50 border-slate-800' : 'bg-slate-800 border-slate-700'}`}
-      style={isPast ? { backgroundColor: '#1a2030' } : undefined}
+      className="flex rounded-xl overflow-hidden border border-white/[.07] hover:border-white/[.13] active:scale-[0.99] transition-all shadow-card"
+      style={{ backgroundColor: '#0E1525' }}
     >
-      <div className="h-0.5" style={{ backgroundColor: isPast ? '#334155' : colour }} />
-      <div className="p-4">
+      {/* Left accent */}
+      <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: colour }} />
+
+      <div className="flex-1 p-4">
         {showMember && member && (
           <div className="flex items-center gap-2 mb-3">
-            <Avatar name={member.name} colour={isPast ? '#64748b' : colour} size="sm" />
+            <Avatar name={member.name} colour={colour} size="sm" memberId={member.id} />
             <span className="text-xs text-slate-400 font-medium">{member.name}</span>
-            {isPast && <span className="text-[10px] bg-slate-700 text-slate-500 px-1.5 py-0.5 rounded ml-auto">Completed</span>}
           </div>
         )}
 
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-white truncate">{hotel.hotel_name}</h3>
-            {location && <p className="text-xs text-slate-400 mt-0.5">{location}</p>}
+            <h3 className="text-[14px] font-semibold tracking-tight text-white truncate">{hotel.hotel_name}</h3>
+            {location && <p className="text-[12px] text-slate-500 mt-0.5">{location}</p>}
           </div>
           <div className="text-right flex-shrink-0">
-            <div className="text-xs font-medium text-slate-300">
+            <div className="text-[12px] font-medium text-slate-300">
               {fmtDate(hotel.check_in_date)} – {fmtDate(hotel.check_out_date)}
             </div>
             <div className="text-[11px] text-slate-500 mt-0.5">
@@ -59,22 +93,16 @@ export function HotelCard({ hotel, member, showMember = true }: HotelCardProps) 
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
+        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/[.05] text-[12px] text-slate-500">
           {hotel.check_in_time && <span>Check-in {hotel.check_in_time}</span>}
           {hotel.room_type && <span className="truncate">{hotel.room_type}</span>}
           {hotel.confirmation_number && (
-            <span className="font-mono ml-auto">{hotel.confirmation_number}</span>
+            <span className="font-mono ml-auto text-slate-600">{hotel.confirmation_number}</span>
           )}
         </div>
 
-        {hotel.booked_under && (
-          <p className="text-xs text-slate-500 mt-1">Under: {hotel.booked_under}</p>
-        )}
-        {hotel.price && (
-          <p className="text-xs text-slate-400 mt-1 font-medium">{hotel.price}</p>
-        )}
         {hotel.voucher_url && (
-          <span className="text-[10px] bg-sky-900/60 text-sky-400 px-1.5 py-0.5 rounded mt-2 inline-block">
+          <span className="text-[10px] font-semibold bg-cyan-400/10 text-cyan-400 px-2 py-0.5 rounded-md mt-2 inline-block">
             Voucher ↗
           </span>
         )}

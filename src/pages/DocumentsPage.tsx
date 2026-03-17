@@ -133,39 +133,6 @@ export function DocumentsPage() {
           <div className="flex justify-center py-16"><LoadingSpinner size="lg" /></div>
         ) : (
           <>
-            {/* Loyalty cards section */}
-            <section>
-              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide px-1 mb-3">
-                Loyalty Cards
-              </h2>
-              <div className="flex flex-col gap-2">
-                {DISPLAY_MEMBERS.map(member => (
-                  <button
-                    key={member.id}
-                    onClick={() => navigate(`/loyalty-cards/${member.id}`)}
-                    className="flex items-center gap-4 bg-slate-800 rounded-xl p-4 border border-slate-700 hover:border-slate-500 active:scale-[0.99] transition-all text-left"
-                  >
-                    <Avatar name={member.name} colour={member.colour} size="md" />
-                    <span className="text-sm font-semibold text-white flex-1">{member.name}</span>
-                    <svg className="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                  </button>
-                ))}
-                {isOnline && (
-                  <button
-                    onClick={() => navigate('/loyalty-cards/add')}
-                    className="flex items-center justify-center gap-2 bg-sky-500/10 border border-sky-700 rounded-xl p-3 text-sm text-sky-400 hover:bg-sky-500/20 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Add loyalty card
-                  </button>
-                )}
-              </div>
-            </section>
-
             {/* Expiry alerts */}
             {alerts.length > 0 && (
               <section>

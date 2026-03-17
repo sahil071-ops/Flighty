@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from '@/context/AppContext';
 import { OfflineProvider } from '@/context/OfflineContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import { UpdatePrompt } from '@/components/ui/UpdatePrompt';
 
 import { PasswordPage } from '@/pages/PasswordPage';
@@ -74,12 +75,14 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <OfflineProvider>
-        <AppProvider>
-          <AppRoutes />
-          <UpdatePrompt />
-        </AppProvider>
-      </OfflineProvider>
+      <ThemeProvider>
+        <OfflineProvider>
+          <AppProvider>
+            <AppRoutes />
+            <UpdatePrompt />
+          </AppProvider>
+        </OfflineProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

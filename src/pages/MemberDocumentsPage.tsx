@@ -105,35 +105,56 @@ export function MemberDocumentsPage() {
       <main className="flex-1 px-4 py-4" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
         {loading ? (
           <div className="flex justify-center py-16"><LoadingSpinner size="lg" /></div>
-        ) : docs.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-5xl mb-4">🪪</div>
-            <h2 className="text-lg font-semibold text-white mb-2">No documents yet</h2>
-            {isOnline ? (
-              <button
-                onClick={() => navigate('/documents/add', { state: { memberId } })}
-                className="inline-flex items-center gap-2 bg-sky-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-sky-400 transition-colors mt-4"
-              >
-                Add document
-              </button>
-            ) : (
-              <p className="text-slate-500 text-sm">No documents have been added yet.</p>
-            )}
-          </div>
         ) : (
           <div className="flex flex-col gap-6">
-            {TYPE_ORDER.filter(t => grouped.has(t)).map(type => (
-              <section key={type}>
-                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide px-1 mb-3">
-                  {TYPE_LABELS[type]}
-                </h2>
-                <div className="flex flex-col gap-2">
-                  {(grouped.get(type) ?? []).map(doc => (
-                    <DocumentCard key={doc.id} doc={doc} />
-                  ))}
+            {/* Loyalty cards entry — always shown at top */}
+            <section>
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide px-1 mb-3">
+                Loyalty Cards
+              </h2>
+              <button
+                onClick={() => navigate(`/loyalty-cards/${memberId}`)}
+                className="w-full flex items-center gap-4 bg-slate-800 rounded-xl p-4 border border-slate-700 hover:border-slate-500 active:scale-[0.99] transition-all text-left"
+              >
+                <div className="w-9 h-9 rounded-full bg-amber-400/10 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                  </svg>
                 </div>
-              </section>
-            ))}
+                <span className="text-sm font-semibold text-white flex-1">Frequent Flyer Cards</span>
+                <svg className="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            </section>
+
+            {docs.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-5xl mb-4">🪪</div>
+                <h2 className="text-base font-semibold text-white mb-2">No documents yet</h2>
+                {isOnline && (
+                  <button
+                    onClick={() => navigate('/documents/add', { state: { memberId } })}
+                    className="inline-flex items-center gap-2 bg-cyan-400 text-black px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-cyan-300 transition-colors mt-2"
+                  >
+                    Add document
+                  </button>
+                )}
+              </div>
+            ) : (
+              TYPE_ORDER.filter(t => grouped.has(t)).map(type => (
+                <section key={type}>
+                  <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide px-1 mb-3">
+                    {TYPE_LABELS[type]}
+                  </h2>
+                  <div className="flex flex-col gap-2">
+                    {(grouped.get(type) ?? []).map(doc => (
+                      <DocumentCard key={doc.id} doc={doc} />
+                    ))}
+                  </div>
+                </section>
+              ))
+            )}
           </div>
         )}
       </main>

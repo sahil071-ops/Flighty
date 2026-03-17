@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp, FAMILY_MEMBERS } from '@/context/AppContext';
+import { useTheme } from '@/context/ThemeContext';
 import { Avatar } from '@/components/ui/Avatar';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { ThisWeekBanner } from '@/components/trips/ThisWeekBanner';
@@ -15,6 +16,7 @@ type Tab = 'members' | 'calendar';
 
 export function HomePage() {
   const { setCurrentMember, lock } = useApp();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('members');
 
@@ -34,7 +36,6 @@ export function HomePage() {
       >
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2.5">
-            {/* Plane icon */}
             <div className="w-7 h-7 rounded-lg bg-cyan-400/10 flex items-center justify-center">
               <svg className="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
@@ -42,19 +43,42 @@ export function HomePage() {
             </div>
             <h1 className="text-[15px] font-semibold tracking-tight text-white">FamilyFlights</h1>
           </div>
-          <button
-            onClick={() => lock()}
-            className="text-slate-600 hover:text-slate-300 transition-colors p-2 -mr-2"
-            aria-label="Lock app"
-          >
-            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-          </button>
+
+          <div className="flex items-center gap-1">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="text-slate-600 hover:text-slate-300 transition-colors p-2"
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? (
+                /* Sun icon */
+                <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                </svg>
+              ) : (
+                /* Moon icon */
+                <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                </svg>
+              )}
+            </button>
+
+            {/* Lock */}
+            <button
+              onClick={() => lock()}
+              className="text-slate-600 hover:text-slate-300 transition-colors p-2 -mr-2"
+              aria-label="Lock app"
+            >
+              <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Tab bar */}
-        <div className="flex px-4 gap-0 border-b border-white/[.06]">
+        <div className="flex px-4 border-b border-white/[.06]">
           {(['members', 'calendar'] as Tab[]).map(t => (
             <button
               key={t}
@@ -86,27 +110,34 @@ export function HomePage() {
               </p>
               <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
                 {FAMILY_MEMBERS.map(member => (
-                  <button
-                    key={member.id}
-                    onClick={() => selectMember(member)}
-                    className="flex flex-col items-center gap-3 rounded-2xl p-5 active:scale-95 transition-all duration-150 border relative overflow-hidden"
-                    style={{
-                      backgroundColor: `${member.colour}0A`,
-                      borderColor: `${member.colour}28`,
-                    }}
-                  >
-                    {/* Subtle top glow line */}
-                    <div
-                      className="absolute top-0 left-0 right-0 h-px"
-                      style={{ backgroundColor: `${member.colour}50` }}
-                    />
-                    <Avatar name={member.name} colour={member.colour} size="xl" />
-                    <span className="text-[13px] font-semibold tracking-tight text-white">
-                      {member.name}
-                    </span>
-                  </button>
+                  <div key={member.id} className="relative">
+                    <button
+                      onClick={() => selectMember(member)}
+                      className="w-full flex flex-col items-center gap-3 rounded-2xl p-5 active:scale-95 transition-all duration-150 border relative overflow-hidden"
+                      style={{
+                        backgroundColor: `${member.colour}0A`,
+                        borderColor: `${member.colour}28`,
+                      }}
+                    >
+                      {/* Top glow line */}
+                      <div className="absolute top-0 left-0 right-0 h-px" style={{ backgroundColor: `${member.colour}50` }} />
+                      <Avatar
+                        name={member.name}
+                        colour={member.colour}
+                        size="xl"
+                        memberId={member.id}
+                        editable
+                      />
+                      <span className="text-[13px] font-semibold tracking-tight text-white">
+                        {member.name}
+                      </span>
+                    </button>
+                  </div>
                 ))}
               </div>
+              <p className="text-[11px] text-slate-700 text-center mt-3">
+                Tap your photo to change it
+              </p>
             </div>
 
             <button onClick={() => navigate('/whats-new')} className="text-center mt-1">
