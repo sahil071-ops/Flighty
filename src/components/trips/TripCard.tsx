@@ -46,8 +46,7 @@ export function TripCard({ trip, flights, hotels }: TripCardProps) {
   return (
     <Link
       to={`/trips/${trip.id}`}
-      className="flex rounded-xl overflow-hidden border border-white/[.07] hover:border-white/[.13] active:scale-[0.99] transition-all duration-150 shadow-card"
-      style={{ backgroundColor: '#0E1525' }}
+      className="flex rounded-xl overflow-hidden border dark:border-white/[.07] border-black/[.07] dark:hover:border-white/[.13] hover:border-black/[.13] active:scale-[0.99] transition-all duration-150 shadow-card bg-slate-800"
     >
       {/* Left accent bar */}
       <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: isUpcoming ? primaryColour : '#1A2235' }} />
@@ -62,7 +61,7 @@ export function TripCard({ trip, flights, hotels }: TripCardProps) {
           <div className="flex -space-x-1.5 flex-shrink-0 mt-0.5">
             {members.slice(0, 5).map(m => m && (
               <Avatar key={m.id} name={m.name} colour={m.colour} size="xs"
-                className="ring-[1.5px] ring-[#0E1525]" />
+                className="ring-[1.5px] dark:ring-slate-900 ring-white" />
             ))}
           </div>
         </div>

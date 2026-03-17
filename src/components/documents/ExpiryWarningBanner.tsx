@@ -43,12 +43,12 @@ export function ExpiryWarningBanner() {
   return (
     <button
       onClick={() => navigate('/documents')}
-      className="w-full bg-red-900/40 border border-red-700/50 rounded-xl px-4 py-3 flex items-center gap-3 text-left active:scale-[0.99] transition-all"
+      className="w-full dark:bg-red-900/40 bg-red-50 dark:border-red-700/50 border-red-300 border rounded-xl px-4 py-3 flex items-center gap-3 text-left active:scale-[0.99] transition-all"
     >
-      <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+      <svg className="w-4 h-4 dark:text-red-400 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
         <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
       </svg>
-      <p className="text-sm text-red-300 text-left">⚠ {text}</p>
+      <p className="text-sm dark:text-red-300 text-red-700 text-left">{text}</p>
     </button>
   );
 }
