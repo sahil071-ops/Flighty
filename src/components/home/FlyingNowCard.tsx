@@ -142,8 +142,7 @@ export function FlyingNowCard() {
         return (
           <div
             key={group.key}
-            className="rounded-2xl overflow-hidden border border-cyan-400/20"
-            style={{ backgroundColor: '#091420' }}
+            className="rounded-2xl overflow-hidden border border-cyan-400/20 bg-slate-800"
           >
             {/* Top accent line */}
             <div className="h-px bg-gradient-to-r from-cyan-400/60 via-cyan-400/30 to-transparent" />

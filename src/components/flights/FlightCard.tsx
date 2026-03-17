@@ -21,50 +21,78 @@ export function FlightCard({ flight, member, showMember = true, grouped = false 
   const depTime = formatLocalTime(flight.departure_datetime_utc, flight.departure_timezone);
   const arrTime = formatLocalTime(flight.arrival_datetime_utc, flight.arrival_timezone);
   const depDate = formatLocalDateCard(flight.departure_datetime_utc, flight.departure_timezone);
-  const depAbbr = getTimezoneAbbr(flight.departure_datetime_utc, flight.departure_timezone);
-  const arrAbbr = getTimezoneAbbr(flight.arrival_datetime_utc, flight.arrival_timezone);
   const duration = getDurationString(flight.departure_datetime_utc, flight.arrival_datetime_utc);
 
   const colour = member?.colour ?? '#64748b';
-  const accentColour = isPast ? '#1A2235' : colour;
+
+  // ─── Collapsed past card ──────────────────────────────────────────────────
+  if (isPast) {
+    return (
+      <Link
+        to={`/flights/${flight.id}`}
+        className={`flex items-center gap-3 py-2.5 px-3 active:opacity-60 transition-opacity ${
+          grouped ? '' : 'rounded-xl border border-white/[.04]'
+        }`}
+        style={{ backgroundColor: grouped ? undefined : 'rgba(14,21,37,0.5)' }}
+      >
+        {/* Left dot */}
+        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 opacity-30" style={{ backgroundColor: colour }} />
+
+        {/* Route + time — struck through */}
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <span className="font-mono text-[12px] text-slate-600 line-through tabular-nums">
+            {flight.departure_airport_code} → {flight.arrival_airport_code}
+          </span>
+          <span className="text-[11px] text-slate-700 line-through tabular-nums">
+            {depTime} – {arrTime}
+          </span>
+          {duration && (
+            <span className="text-[10px] text-slate-700 hidden sm:inline">{duration}</span>
+          )}
+        </div>
+
+        {/* Date + member avatar */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-[10px] text-slate-700">{depDate}</span>
+          {showMember && member && (
+            <Avatar name={member.name} colour="#334155" size="xs" />
+          )}
+        </div>
+      </Link>
+    );
+  }
+
+  // ─── Full active card ─────────────────────────────────────────────────────
+  const depAbbr = getTimezoneAbbr(flight.departure_datetime_utc, flight.departure_timezone);
+  const arrAbbr = getTimezoneAbbr(flight.arrival_datetime_utc, flight.arrival_timezone);
 
   return (
     <Link
       to={`/flights/${flight.id}`}
-      className={`flex overflow-hidden active:scale-[0.99] transition-all duration-150 border ${
+      className={`flex overflow-hidden active:scale-[0.99] transition-all duration-150 border hover:border-white/[.14] ${
         grouped ? 'rounded-none border-x-0 border-b-0' : 'rounded-xl shadow-card'
-      } ${isPast ? 'opacity-60' : 'hover:border-white/[.14]'}`}
+      }`}
       style={{
-        backgroundColor: isPast ? '#0A0E18' : '#0E1525',
+        backgroundColor: '#0E1525',
         borderColor: grouped ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.07)',
       }}
     >
       {/* Left accent bar */}
       {!grouped && (
-        <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: accentColour }} />
+        <div className="w-[3px] flex-shrink-0" style={{ backgroundColor: colour }} />
       )}
 
       <div className="flex-1 p-4">
         {/* Top row: member + date */}
         {showMember && member ? (
           <div className="flex items-center gap-2 mb-3.5">
-            <Avatar name={member.name} colour={isPast ? '#334155' : colour} size="sm" />
+            <Avatar name={member.name} colour={colour} size="sm" memberId={member.id} />
             <span className="text-[12px] text-slate-400 font-medium">{member.name}</span>
             <span className="text-[12px] font-medium text-slate-400 ml-auto">{depDate}</span>
-            {isPast && (
-              <span className="text-[10px] font-semibold tracking-[0.04em] bg-slate-800 text-slate-600 px-2 py-0.5 rounded-md ml-1">
-                Done
-              </span>
-            )}
           </div>
         ) : (
           <div className="flex items-center justify-between mb-3.5">
             <div className="text-[12px] font-medium text-slate-400">{depDate}</div>
-            {isPast && (
-              <span className="text-[10px] font-semibold tracking-[0.04em] bg-slate-800 text-slate-600 px-2 py-0.5 rounded-md">
-                Done
-              </span>
-            )}
           </div>
         )}
 
@@ -92,7 +120,7 @@ export function FlightCard({ flight, member, showMember = true, grouped = false 
                 className="w-[14px] h-[14px] flex-shrink-0"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                style={{ color: isPast ? '#334155' : colour }}
+                style={{ color: colour }}
               >
                 <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
               </svg>

@@ -4,31 +4,33 @@ export default {
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // Override slate to a deeper, blue-tinted dark palette
+        // All slate values reference CSS variables — switching html.dark <-> html.light
+        // automatically re-themes every component that uses bg-slate-*, text-slate-*, border-slate-*
         slate: {
-          950: '#04050C',
-          900: '#07090F',
-          850: '#0A0F1C',
-          800: '#0E1525',
-          750: '#13192E',
-          700: '#1A2235',
-          650: '#202B42',
-          600: '#293550',
-          500: '#3D4F6A',
-          400: '#5C718C',
-          300: '#8899B0',
-          200: '#B3BFD1',
-          100: '#D6DEE8',
-          50:  '#EDF1F7',
+          950: 'rgb(var(--s-950) / <alpha-value>)',
+          900: 'rgb(var(--s-900) / <alpha-value>)',
+          850: 'rgb(var(--s-850) / <alpha-value>)',
+          800: 'rgb(var(--s-800) / <alpha-value>)',
+          750: 'rgb(var(--s-750) / <alpha-value>)',
+          700: 'rgb(var(--s-700) / <alpha-value>)',
+          650: 'rgb(var(--s-650) / <alpha-value>)',
+          600: 'rgb(var(--s-600) / <alpha-value>)',
+          500: 'rgb(var(--s-500) / <alpha-value>)',
+          400: 'rgb(var(--s-400) / <alpha-value>)',
+          300: 'rgb(var(--s-300) / <alpha-value>)',
+          200: 'rgb(var(--s-200) / <alpha-value>)',
+          100: 'rgb(var(--s-100) / <alpha-value>)',
+          50:  'rgb(var(--s-50)  / <alpha-value>)',
         },
         surface: {
-          DEFAULT: '#07090F',
-          card:    '#0E1525',
-          raised:  '#13192E',
-          hover:   '#1A2235',
+          DEFAULT: 'rgb(var(--s-900) / <alpha-value>)',
+          card:    'rgb(var(--s-800) / <alpha-value>)',
+          raised:  'rgb(var(--s-750) / <alpha-value>)',
+          hover:   'rgb(var(--s-700) / <alpha-value>)',
         },
       },
       fontFamily: {
@@ -39,7 +41,8 @@ export default {
         tightest: '-0.04em',
       },
       boxShadow: {
-        card: '0 2px 20px rgba(0,0,0,0.5)',
+        card: '0 2px 20px rgba(0,0,0,0.18)',
+        'card-dark': '0 2px 20px rgba(0,0,0,0.5)',
         glow: '0 0 20px rgba(34,211,238,0.15)',
       },
     },

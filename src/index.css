@@ -4,28 +4,67 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Safe area support for iOS notch / home indicator */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
+/* ─── Dark mode palette (default) ──────────────────────────────────────── */
+html.dark, html:not(.light) {
+  --s-950:  4   5   12;
+  --s-900:  7   9   15;
+  --s-850:  10  15  28;
+  --s-800:  14  21  37;
+  --s-750:  19  25  46;
+  --s-700:  26  34  53;
+  --s-650:  32  43  66;
+  --s-600:  41  53  80;
+  --s-500:  61  79  106;
+  --s-400:  92  113 140;
+  --s-300:  136 153 176;
+  --s-200:  179 191 209;
+  --s-100:  214 222 232;
+  --s-50:   237 241 247;
+
+  --page-bg: #07090F;
+  color-scheme: dark;
 }
 
-/* Base */
+/* ─── Light mode palette ────────────────────────────────────────────────── */
+html.light {
+  --s-950:  7   9   15;
+  --s-900:  245 247 252;   /* page background */
+  --s-850:  238 241 250;
+  --s-800:  255 255 255;   /* card surface = white */
+  --s-750:  249 250 255;
+  --s-700:  218 226 242;   /* borders */
+  --s-650:  198 210 232;
+  --s-600:  170 186 215;
+  --s-500:  100 116 139;   /* muted text */
+  --s-400:  71  85  105;   /* secondary text */
+  --s-300:  51  65  85;
+  --s-200:  30  41  59;
+  --s-100:  15  23  42;    /* primary text */
+  --s-50:   7   9   15;
+
+  --page-bg: #F5F7FC;
+  color-scheme: light;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────── */
 html {
-  background-color: #07090F;
-  color-scheme: dark;
+  background-color: var(--page-bg, #07090F);
   scroll-behavior: smooth;
 }
 
 body {
-  background-color: #07090F;
-  color: #EDF1F7;
+  background-color: var(--page-bg, #07090F);
+  color: rgb(var(--s-100));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
   letter-spacing: -0.01em;
+}
+
+/* In light mode, text-white means "primary content" so make it dark */
+html.light .text-white {
+  color: rgb(var(--s-100));
 }
 
 /* Remove tap highlight */
@@ -34,33 +73,17 @@ body {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 3px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.08);
-  border-radius: 2px;
-}
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.2); border-radius: 2px; }
 
-/* Date/time dark mode */
+/* Date/time inputs */
 input[type="date"],
 input[type="time"] {
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 
 /* Tabular numbers for times */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
-}
-
-/* Label style utility */
-.label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #3D4F6A;
 }
