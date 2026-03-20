@@ -243,7 +243,7 @@ export function TripDetailPage() {
         setFlights(cachedFlights.filter(f => f.trip_id === tripId).sort((a, b) =>
           a.departure_datetime_utc.localeCompare(b.departure_datetime_utc)
         ));
-        setHotels(cachedHotels.filter(h => h.trip_id === tripId));
+        setHotels(cachedHotels.filter(h => h.trip_id === tripId).sort((a, b) => a.check_in_date.localeCompare(b.check_in_date)));
         setCarRentals(cachedRentals.filter(r => r.trip_id === tripId));
         setLinkedDocs([]); // not cached offline
       }
