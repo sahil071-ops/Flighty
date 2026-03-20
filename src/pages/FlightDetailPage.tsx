@@ -352,16 +352,28 @@ export function FlightDetailPage() {
           </div>
         )}
 
-        {/* Check-in button */}
-        <button
-          onClick={handleCheckIn}
-          className="w-full flex items-center justify-center gap-2 bg-cyan-400 hover:bg-cyan-300 active:bg-cyan-500 text-black font-semibold rounded-xl py-3 mb-5 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Check in online
-        </button>
+        {/* Check-in button — muted once boarding pass is uploaded */}
+        {boardingPass ? (
+          <button
+            onClick={handleCheckIn}
+            className="w-full flex items-center justify-center gap-1.5 text-slate-500 text-xs font-medium py-2 mb-5 transition-colors hover:text-slate-400"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Check in online
+          </button>
+        ) : (
+          <button
+            onClick={handleCheckIn}
+            className="w-full flex items-center justify-center gap-2 bg-cyan-400 hover:bg-cyan-300 active:bg-cyan-500 text-black font-semibold rounded-xl py-3 mb-5 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Check in online
+          </button>
+        )}
 
         {/* Boarding pass */}
         <BoardingPassSection
