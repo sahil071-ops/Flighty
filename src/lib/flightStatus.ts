@@ -58,7 +58,9 @@ export async function fetchFlightStatus(
   }
 
   try {
-    const params = new URLSearchParams({ flight_iata: flightNumber, flight_date: date });
+    // Normalise flight number: AviationStack expects no dash/space (e.g. "W46003" not "W4-6003")
+    const iataCode = flightNumber.replace(/[\s-]/g, '');
+    const params = new URLSearchParams({ flight_iata: iataCode, flight_date: date });
     const response = await fetch(`/api/aviationstack?${params}`, {
       signal: AbortSignal.timeout(10000),
     });

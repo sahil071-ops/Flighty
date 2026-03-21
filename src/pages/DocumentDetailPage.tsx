@@ -56,6 +56,7 @@ export function DocumentDetailPage() {
   const [fileLoading, setFileLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!docId) return;
@@ -95,8 +96,15 @@ export function DocumentDetailPage() {
     if (!doc?.file_url) return;
     setFileLoading(true);
     try {
-      if (isOnline) {
-        // Signed URL avoids blob: popup-blocker issues on iOS Safari
+      if (doc.file_type === 'image') {
+        // Show images inline — avoids iOS Safari's "download to preview" flow
+        const { data, error } = await supabase.storage
+          .from('member-documents')
+          .createSignedUrl(doc.file_url, 300);
+        if (error || !data?.signedUrl) throw new Error('Could not generate file URL');
+        setLightboxUrl(data.signedUrl);
+      } else if (isOnline) {
+        // PDFs: open in new tab
         const { data, error } = await supabase.storage
           .from('member-documents')
           .createSignedUrl(doc.file_url, 120);
@@ -321,6 +329,37 @@ export function DocumentDetailPage() {
           </Button>
         )}
       </div>
+
+      {/* Inline image lightbox — avoids iOS Safari download flow */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex flex-col"
+          onClick={() => setLightboxUrl(null)}
+        >
+          {/* Close bar */}
+          <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" onClick={e => e.stopPropagation()}>
+            <span className="text-sm text-white/70 truncate">{doc?.label}</span>
+            <button
+              onClick={() => setLightboxUrl(null)}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white ml-3"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          {/* Image — pinch-zoom works natively on iOS inside overflow-auto */}
+          <div className="flex-1 overflow-auto flex items-center justify-center p-2">
+            <img
+              src={lightboxUrl}
+              alt={doc?.label ?? 'Document'}
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={e => e.stopPropagation()}
+            />
+          </div>
+          <div className="py-4 flex-shrink-0" />
+        </div>
+      )}
     </Layout>
   );
 }
