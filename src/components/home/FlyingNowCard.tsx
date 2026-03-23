@@ -1,7 +1,8 @@
 /**
  * Flying Now card — shown on Home screen when any family flight
  * departs within the next 3 hours (and hasn't departed more than 30 min ago).
- * Deduplicates: one card per flight number + date, shows all member dots.
+ * Deduplicates: one card per normalised flight number + date, shows all member dots.
+ * Auto-fetches live status for each visible flight (respects 15-min cache TTL).
  */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { getCachedFlights } from '@/lib/db';
 import { useOffline } from '@/context/OfflineContext';
 import { getMember } from '@/data/members';
-import { fetchFlightStatus, statusLabel, statusColor, cacheAgeMinutes as calcAge } from '@/lib/flightStatus';
+import { fetchFlightStatus, isCacheStale, statusLabel, statusColor, cacheAgeMinutes as calcAge, formatDelay } from '@/lib/flightStatus';
 import { getCachedFlightStatus } from '@/lib/db';
 import { formatLocalTime, getTimezoneAbbr } from '@/lib/timezone';
 import { Avatar } from '@/components/ui/Avatar';
@@ -17,7 +18,7 @@ import type { Flight, FlightStatus } from '@/types';
 
 interface FlightGroup {
   key: string;
-  flightNumber: string;
+  flightNumber: string; // always normalised (no dashes/spaces)
   airline: string | null;
   departureCode: string;
   arrivalCode: string;
@@ -41,15 +42,27 @@ function formatCountdown(minutes: number): string {
   return `${h}h ${m}m`;
 }
 
+/** Local YYYY-MM-DD in the flight's departure timezone — matches AviationStack's date key */
+function localDate(utcIso: string, timezone: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone || 'UTC',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(utcIso));
+}
+
 function groupFlights(flights: Flight[]): FlightGroup[] {
   const map = new Map<string, FlightGroup>();
   for (const f of flights) {
+    // Normalise flight number so "BA199" and "BA-199" map to the same group
+    const normalized = f.flight_number.replace(/[\s-]/g, '');
     const date = f.departure_datetime_utc.slice(0, 10);
-    const key = `${f.flight_number}_${date}`;
+    const key = `${normalized}_${date}`;
     if (!map.has(key)) {
       map.set(key, {
         key,
-        flightNumber: f.flight_number,
+        flightNumber: normalized,
         airline: f.airline,
         departureCode: f.departure_airport_code,
         arrivalCode: f.arrival_airport_code,
@@ -75,7 +88,6 @@ export function FlyingNowCard() {
   const { isOnline } = useOffline();
   const [groups, setGroups] = useState<FlightGroup[]>([]);
   const [statusMap, setStatusMap] = useState<Record<string, FlightStatus>>({});
-  const [refreshing, setRefreshing] = useState<string | null>(null);
 
   useEffect(() => {
     loadFlights();
@@ -103,27 +115,34 @@ export function FlyingNowCard() {
       const grouped = groupFlights(relevant);
       setGroups(grouped);
 
+      // Load cached statuses using the local departure date (consistent with FlightDetailPage)
       const statuses: Record<string, FlightStatus> = {};
       for (const g of grouped) {
-        const date = g.departureDatetimeUtc.slice(0, 10);
+        const date = localDate(g.departureDatetimeUtc, g.departureTimezone);
         const cached = await getCachedFlightStatus(g.flightNumber, date);
         if (cached) statuses[g.key] = cached;
       }
       setStatusMap(statuses);
+
+      // Auto-fetch stale / missing statuses — one request per unique flight, not per person
+      if (isOnline) {
+        for (const g of grouped) {
+          const existing = statuses[g.key];
+          if (!existing || isCacheStale(existing)) {
+            const date = localDate(g.departureDatetimeUtc, g.departureTimezone);
+            fetchFlightStatus(g.flightNumber, date)
+              .then(result => {
+                if (result.status) {
+                  setStatusMap(prev => ({ ...prev, [g.key]: result.status! }));
+                }
+              })
+              .catch(() => { /* non-critical */ });
+          }
+        }
+      }
     } catch {
       // Non-critical
     }
-  }
-
-  async function handleRefreshStatus(group: FlightGroup) {
-    if (!isOnline) return;
-    setRefreshing(group.key);
-    const date = group.departureDatetimeUtc.slice(0, 10);
-    const result = await fetchFlightStatus(group.flightNumber, date);
-    if (result.status) {
-      setStatusMap(prev => ({ ...prev, [group.key]: result.status! }));
-    }
-    setRefreshing(null);
   }
 
   if (groups.length === 0) return null;
@@ -136,8 +155,9 @@ export function FlyingNowCard() {
         const depAbbr = getTimezoneAbbr(group.departureDatetimeUtc, group.departureTimezone);
         const flightStatus = statusMap[group.key];
         const gateFromStatus = flightStatus?.departure_gate;
-        const isRefreshing = refreshing === group.key;
+        const delayStr = formatDelay(flightStatus?.departure_delay ?? null);
         const isDeparted = minsUntil <= 0;
+        const ageMin = flightStatus ? calcAge(flightStatus) : null;
 
         return (
           <div
@@ -158,25 +178,9 @@ export function FlyingNowCard() {
                     Flying Now
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-[13px] font-bold tabular-nums ${isDeparted ? 'text-slate-500' : 'text-white'}`}>
-                    {formatCountdown(minsUntil)}
-                  </span>
-                  {isOnline && (
-                    <button
-                      onClick={e => { e.stopPropagation(); handleRefreshStatus(group); }}
-                      disabled={isRefreshing}
-                      className="text-slate-600 hover:text-cyan-400 transition-colors disabled:opacity-40"
-                    >
-                      <svg
-                        className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-cyan-400' : ''}`}
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
+                <span className={`text-[13px] font-bold tabular-nums ${isDeparted ? 'text-slate-500' : 'text-white'}`}>
+                  {formatCountdown(minsUntil)}
+                </span>
               </div>
 
               {/* Clickable flight body */}
@@ -205,11 +209,11 @@ export function FlyingNowCard() {
                   </div>
                 </div>
 
-                {/* Gate + status */}
+                {/* Status row — gate, status badge, delay, cache age */}
                 {(gateFromStatus || flightStatus) && (
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
                     {gateFromStatus && (
-                      <span className="text-[12px] font-bold text-white bg-slate-800 border border-white/[.08] px-2.5 py-1 rounded-lg">
+                      <span className="text-[12px] font-bold text-white bg-slate-700 border border-white/[.08] px-2.5 py-1 rounded-lg">
                         Gate {gateFromStatus}
                       </span>
                     )}
@@ -218,9 +222,14 @@ export function FlyingNowCard() {
                         {statusLabel(flightStatus.status)}
                       </span>
                     )}
-                    {flightStatus && (
-                      <span className="text-[10px] text-slate-700 ml-auto">
-                        {calcAge(flightStatus)}m ago
+                    {delayStr && (
+                      <span className="text-[12px] font-bold text-amber-400">
+                        {delayStr}
+                      </span>
+                    )}
+                    {ageMin !== null && (
+                      <span className="text-[10px] text-slate-600 ml-auto">
+                        {ageMin === 0 ? 'Just updated' : `${ageMin}m ago`}
                       </span>
                     )}
                   </div>

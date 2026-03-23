@@ -89,7 +89,7 @@ export async function fetchFlightStatus(
     const arrDelay = flight.arrival?.delay ?? null;
 
     const status: FlightStatus = {
-      flight_number: flightNumber,
+      flight_number: iataCode,  // store normalised so BA-199 and BA199 share the same cache entry
       date,
       status: mapStatusCode(flight.flight_status ?? 'scheduled'),
       departure_scheduled: flight.departure?.scheduled ?? null,
