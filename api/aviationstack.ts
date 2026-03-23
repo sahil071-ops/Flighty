@@ -22,6 +22,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const upstream = await fetch(`http://api.aviationstack.com/v1/flights?${params}`);
     const data = await upstream.json();
 
+    // AviationStack returns HTTP 200 even for errors — surface them properly
+    if (data?.error) {
+      const code = data.error?.code;
+      const msg = data.error?.message ?? 'AviationStack API error';
+      const status = code === 101 ? 401 : code === 104 ? 429 : 502;
+      return res.status(status).json({ error: msg });
+    }
+
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate');
     return res.status(200).json(data);
   } catch (err) {
