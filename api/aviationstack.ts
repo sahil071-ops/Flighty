@@ -6,7 +6,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'AviationStack API key not configured' });
   }
 
-  const { flight_iata, flight_date } = req.query;
+  const { flight_iata } = req.query;
   if (!flight_iata) {
     return res.status(400).json({ error: 'flight_iata is required' });
   }
@@ -14,8 +14,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const params = new URLSearchParams({
     access_key: apiKey,
     flight_iata: String(flight_iata),
+    // flight_date is a paid-plan-only parameter on AviationStack free tier
+    // omitting it returns the current real-time flight status
   });
-  if (flight_date) params.set('flight_date', String(flight_date));
 
   try {
     // AviationStack free tier uses HTTP; this server-side proxy handles it
