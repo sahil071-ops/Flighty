@@ -66,10 +66,15 @@ export async function fetchFlightStatus(
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      // Return cached if available, even if stale
+      let errMsg = 'API error';
+      try {
+        const body = await response.json();
+        if (response.status === 401) errMsg = 'Invalid AviationStack API key';
+        else if (response.status === 429) errMsg = 'AviationStack monthly quota exceeded';
+        else errMsg = body?.error ?? 'API error';
+      } catch { /* ignore parse error */ }
       if (cached) return { status: cached, cached: true, cacheAgeMinutes: cacheAgeMinutes(cached), error: null };
-      return { status: null, cached: false, cacheAgeMinutes: null, error: `API error: ${err}` };
+      return { status: null, cached: false, cacheAgeMinutes: null, error: errMsg };
     }
 
     const data = await response.json();

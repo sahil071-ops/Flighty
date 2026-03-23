@@ -25,7 +25,12 @@ export function FlightStatusSection({ flight, initialStatus }: FlightStatusSecti
     initialStatus ? cacheAgeMinutes(initialStatus) : null
   );
 
-  const flightDate = flight.departure_datetime_utc.slice(0, 10);
+  const flightDate = new Intl.DateTimeFormat('en-CA', {
+    timeZone: flight.departure_timezone || 'UTC',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(flight.departure_datetime_utc));
 
   async function handleFetch() {
     setLoading(true);
