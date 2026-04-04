@@ -279,6 +279,56 @@ export interface FlightStatus {
   last_fetched: string; // ISO timestamp
 }
 
+// ── Flight Requests ────────────────────────────────────────────────────────────
+
+/** One leg within a flight request option */
+export interface FlightRequestLeg {
+  flight_number: string | null;
+  airline: string | null;
+  airline_iata_code: string | null;
+  departure_airport_code: string;
+  departure_city: string | null;
+  arrival_airport_code: string;
+  arrival_city: string | null;
+  departure_date: string;          // YYYY-MM-DD local
+  departure_time: string;          // HH:MM local
+  arrival_date: string;
+  arrival_time: string;
+  duration_minutes: number | null;
+  layover_minutes_after: number | null; // wait before next leg; null on last leg
+}
+
+/** One flight option within a request (one row in flight_request_options) */
+export interface FlightRequestOption {
+  id: string;
+  request_id: string;
+  option_number: number;
+  legs: FlightRequestLeg[];
+  total_duration_minutes: number | null;
+  stops: number;
+  price: string | null;
+  cabin_class: string | null;
+  baggage_checked_included: boolean | null;
+  baggage_checked_kg: number | null;
+  baggage_cabin_included: boolean | null;
+  notes: string | null;
+  created_at: string;
+}
+
+/** Top-level flight request submitted by the assistant for Sahil's review */
+export interface FlightRequest {
+  id: string;
+  label: string;
+  trip_context: string | null;
+  for_family_member_id: string;    // text slug, e.g. 'sahil'
+  status: 'pending' | 'approved' | 'declined' | 'trip_created';
+  approved_option_id: string | null;
+  approver_comment: string | null;
+  raw_input: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // ── Legacy colour palette (used by member picker) ─────────────────────────────
 
 export const AVATAR_COLOURS = [

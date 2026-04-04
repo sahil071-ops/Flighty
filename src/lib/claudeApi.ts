@@ -276,6 +276,123 @@ export async function extractCarRentalFromFile(file: File): Promise<ExtractedCar
   return callClaudeForDoc<ExtractedCarRental>(CAR_RENTAL_SYSTEM_PROMPT, file, 'Extract all car rental details from this booking confirmation.');
 }
 
+// ── Flight request options extraction ─────────────────────────────────────────
+
+export interface ExtractedFlightOption {
+  option_number: number;
+  price: string | null;
+  cabin_class: string | null;
+  baggage_checked_included: boolean | null;
+  baggage_checked_kg: number | null;
+  baggage_cabin_included: boolean | null;
+  notes: string | null;
+  total_duration_minutes: number | null;
+  stops: number;
+  legs: Array<{
+    flight_number: string | null;
+    airline: string | null;
+    airline_iata_code: string | null;
+    departure_airport_code: string;
+    departure_city: string | null;
+    arrival_airport_code: string;
+    arrival_city: string | null;
+    departure_date: string;
+    departure_time: string;
+    arrival_date: string;
+    arrival_time: string;
+    duration_minutes: number | null;
+    layover_minutes_after: number | null;
+  }>;
+}
+
+const FLIGHT_OPTIONS_SYSTEM_PROMPT = `You are a flight options parser. Extract all flight options from this travel agency communication and return ONLY a JSON array (no markdown, no preamble). Each element is one flight option:
+{
+  "option_number": 1,
+  "price": "string including currency symbol e.g. ₹42,000",
+  "cabin_class": "Economy/Business/First",
+  "baggage_checked_included": true/false/null,
+  "baggage_checked_kg": number or null,
+  "baggage_cabin_included": true/false/null,
+  "notes": "fare conditions, cancellation policy, or other notes — null if none",
+  "total_duration_minutes": number or null,
+  "stops": 0,
+  "legs": [
+    {
+      "flight_number": "BA138",
+      "airline": "British Airways",
+      "airline_iata_code": "BA",
+      "departure_airport_code": "BOM",
+      "departure_city": "Mumbai",
+      "arrival_airport_code": "LHR",
+      "arrival_city": "London",
+      "departure_date": "YYYY-MM-DD",
+      "departure_time": "HH:MM",
+      "arrival_date": "YYYY-MM-DD",
+      "arrival_time": "HH:MM",
+      "duration_minutes": 630,
+      "layover_minutes_after": null
+    }
+  ]
+}
+layover_minutes_after is the wait time after this leg before the next, null for the last leg. If any field cannot be determined use null.`;
+
+async function callClaudeText(systemPrompt: string, text: string): Promise<string> {
+  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string;
+  if (!apiKey) throw new Error('Anthropic API key not configured. Set VITE_ANTHROPIC_API_KEY.');
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: text }],
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Claude API error ${response.status}: ${error}`);
+  }
+
+  const data = await response.json();
+  return data.content?.[0]?.text ?? '';
+}
+
+/** Extract flight options from pasted text (travel agency email etc.) */
+export async function extractFlightOptionsFromText(text: string): Promise<ExtractedFlightOption[]> {
+  const content = await callClaudeText(FLIGHT_OPTIONS_SYSTEM_PROMPT, text);
+  try {
+    const parsed = JSON.parse(stripMarkdown(content));
+    if (!Array.isArray(parsed)) throw new Error('Expected array from Claude');
+    return parsed as ExtractedFlightOption[];
+  } catch {
+    throw new Error(`Failed to parse Claude response: ${content.slice(0, 200)}`);
+  }
+}
+
+/** Extract flight options from an uploaded file (screenshot, PDF, image) */
+export async function extractFlightOptionsFromFile(file: File): Promise<ExtractedFlightOption[]> {
+  const content = await callClaude(
+    FLIGHT_OPTIONS_SYSTEM_PROMPT,
+    file,
+    'Extract all flight options from this travel agency document or screenshot.',
+  );
+  try {
+    const parsed = JSON.parse(stripMarkdown(content));
+    if (!Array.isArray(parsed)) throw new Error('Expected array from Claude');
+    return parsed as ExtractedFlightOption[];
+  } catch {
+    throw new Error(`Failed to parse Claude response: ${content.slice(0, 200)}`);
+  }
+}
+
 /** @deprecated Use extractFlightsFromFile(file) instead. */
 export async function extractFlightsFromPDF(pdfBase64: string): Promise<ExtractedFlight[]> {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string;
