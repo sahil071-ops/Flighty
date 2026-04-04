@@ -1,9 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useApp } from '@/context/AppContext';
 
 // Module-level cache so we don't re-query on every render
 let expiryCache: { val: boolean; ts: number } | null = null;
+let pendingCache: { val: number; ts: number } | null = null;
 
 async function checkExpiringDocs(): Promise<boolean> {
   const now = Date.now();
@@ -24,28 +26,56 @@ async function checkExpiringDocs(): Promise<boolean> {
   }
 }
 
+async function checkPendingRequests(): Promise<number> {
+  const now = Date.now();
+  if (pendingCache && now - pendingCache.ts < 60 * 1000) return pendingCache.val;
+  try {
+    const { count } = await supabase
+      .from('flight_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    const val = count ?? 0;
+    pendingCache = { val, ts: now };
+    return val;
+  } catch {
+    return 0;
+  }
+}
+
 /** Invalidate the cache so the next render re-queries (call after adding/editing docs). */
 export function invalidateExpiryCache() {
   expiryCache = null;
 }
 
+export function invalidatePendingCache() {
+  pendingCache = null;
+}
+
 export function BottomNav() {
   const { pathname } = useLocation();
+  const { currentMember } = useApp();
   const [hasExpiring, setHasExpiring] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     checkExpiringDocs().then(setHasExpiring);
   }, []);
 
+  useEffect(() => {
+    if (!currentMember?.isApprover) return;
+    checkPendingRequests().then(setPendingCount);
+  }, [currentMember?.isApprover]);
+
   const isHome = pathname === '/';
   const isDocs = pathname.startsWith('/documents');
+  const isRequests = pathname.startsWith('/requests');
 
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur-xl border-t border-white/[.06]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-8">
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-6">
         {/* Home */}
         <Link
           to="/"
@@ -79,6 +109,28 @@ export function BottomNav() {
           </div>
           <span className={`text-[10px] font-medium tracking-wide ${isDocs ? 'text-cyan-400' : ''}`}>Documents</span>
         </Link>
+
+        {/* Requests — only shown to the approver */}
+        {currentMember?.isApprover && (
+          <Link
+            to="/requests"
+            className={`flex flex-col items-center gap-1.5 flex-1 py-2 transition-all duration-200 ${
+              isRequests ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <div className="relative">
+              <svg className="w-[22px] h-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={isRequests ? 2 : 1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+              </svg>
+              {pendingCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 ring-2 ring-slate-900">
+                  {pendingCount > 9 ? '9+' : pendingCount}
+                </span>
+              )}
+            </div>
+            <span className={`text-[10px] font-medium tracking-wide ${isRequests ? 'text-cyan-400' : ''}`}>Requests</span>
+          </Link>
+        )}
       </div>
     </nav>
   );

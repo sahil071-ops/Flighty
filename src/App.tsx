@@ -23,6 +23,10 @@ import { WhatsNewPage } from '@/pages/WhatsNewPage';
 import { HotelDetailPage } from '@/pages/HotelDetailPage';
 import { LoyaltyCardsPage } from '@/pages/LoyaltyCardsPage';
 import { AddLoyaltyCardPage } from '@/pages/AddLoyaltyCardPage';
+import { RequestsPage } from '@/pages/RequestsPage';
+import { NewRequestPage } from '@/pages/NewRequestPage';
+import { RequestDetailPage } from '@/pages/RequestDetailPage';
+import { TripFromRequestPage } from '@/pages/TripFromRequestPage';
 
 function AppRoutes() {
   const { isUnlocked } = useApp();
@@ -63,6 +67,14 @@ function AppRoutes() {
       {/* Loyalty cards */}
       <Route path="/loyalty-cards/add" element={<AddLoyaltyCardPage />} />
       <Route path="/loyalty-cards/:memberId" element={<LoyaltyCardsPage />} />
+
+      {/* Requests */}
+      <Route path="/requests" element={<RequestsPage />} />
+      <Route path="/requests/new" element={<NewRequestPage />} />
+      <Route path="/requests/:requestId" element={<RequestDetailPage />} />
+
+      {/* Trip from request */}
+      <Route path="/trips/new-from-request/:requestId" element={<TripFromRequestPage />} />
 
       {/* Version history */}
       <Route path="/whats-new" element={<WhatsNewPage />} />

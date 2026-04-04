@@ -6,6 +6,24 @@ export interface VersionEntry {
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: '3.3.0',
+    date: 'April 2026',
+    changes: [
+      'Flight Request workflow — assistant creates requests with multiple flight options for Sahil to compare and approve',
+      'Comparison view: automatic badges for Lowest price, Fastest, and Best option (both)',
+      'Baggage chips showing checked bag and cabin bag status, with warning when allowance is unconfirmed',
+      'Layover colour-coding: red for very tight connections (<60 min), amber for very long waits (>5 h)',
+      'Travel preferences pinned above comparison cards per family member',
+      'Approve option with optional comment — one-tap trip creation from approved option',
+      'Requests tab in nav visible only to the approver, with live pending count badge',
+      'Auto-refresh flight status on home screen — no manual button needed, respects 15-minute cache',
+      'Fixed duplicate Flying Now cards for the same flight number (e.g. BA199 / BA-199)',
+      'Flight status now uses local departure timezone for correct date sent to AviationStack',
+      'Fixed boarding pass reading booking reference into the seat field',
+      'Check-in button dims after boarding pass is uploaded',
+    ],
+  },
+  {
     version: '3.1.0',
     date: 'March 2026',
     changes: [
