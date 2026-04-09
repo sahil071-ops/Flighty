@@ -61,6 +61,7 @@ export function BottomNav() {
     checkExpiringDocs().then(setHasExpiring);
   }, []);
 
+  // Only fetch pending count for the actual approver (not on unset-device fallback)
   useEffect(() => {
     if (!currentMember?.isApprover) return;
     checkPendingRequests().then(setPendingCount);
@@ -110,8 +111,8 @@ export function BottomNav() {
           <span className={`text-[10px] font-medium tracking-wide ${isDocs ? 'text-cyan-400' : ''}`}>Documents</span>
         </Link>
 
-        {/* Requests — only shown to the approver */}
-        {currentMember?.isApprover && (
+        {/* Requests — shown to the approver, or to everyone until a device-member is set */}
+        {(!currentMember || currentMember.isApprover) && (
           <Link
             to="/requests"
             className={`flex flex-col items-center gap-1.5 flex-1 py-2 transition-all duration-200 ${
