@@ -104,6 +104,7 @@ export function RequestsPage() {
       title="Requests"
       headerRight={
         isDesktop ? (
+          // Desktop: text + icon in header
           <button
             onClick={() => navigate('/requests/new')}
             className="flex items-center gap-1.5 text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors pr-1"
@@ -113,7 +114,18 @@ export function RequestsPage() {
             </svg>
             New Request
           </button>
-        ) : undefined
+        ) : (
+          // Mobile: icon-only + button in header
+          <button
+            onClick={() => navigate('/requests/new')}
+            aria-label="New request"
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400/20 active:scale-95 transition-all"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </button>
+        )
       }
     >
       <div className="px-4 py-4 pb-8">
@@ -121,16 +133,16 @@ export function RequestsPage() {
           <div className="flex justify-center py-16"><LoadingSpinner size="lg" /></div>
         ) : (
           <>
-            {/* New Request button on desktop at top of content too */}
+            {/* Prominent desktop CTA at top of content */}
             {isDesktop && (
               <button
                 onClick={() => navigate('/requests/new')}
-                className="w-full flex items-center justify-center gap-2 bg-cyan-400 hover:bg-cyan-300 text-black font-semibold rounded-xl py-3 mb-5 transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-cyan-400 hover:bg-cyan-300 text-black font-bold rounded-xl py-3.5 mb-5 transition-colors text-sm"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                New Flight Request
+                + New Flight Request
               </button>
             )}
 
